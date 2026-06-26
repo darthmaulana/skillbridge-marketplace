@@ -1,0 +1,319 @@
+Build a mobile-first web-based Android app / PWA based on the Figma design.
+
+Project type:
+
+* Web-based Android app / PWA
+* Mobile-first responsive design
+* Use the Figma design as the main UI reference
+* Match spacing, layout, colors, typography, cards, buttons, badges, and navigation from the Figma design as closely as possible
+
+Recommended tech stack:
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Supabase
+* Supabase Auth
+* Supabase PostgreSQL
+* Supabase Storage
+* Supabase Realtime for chat
+* PWA support
+
+App concept:
+Create a job and skill marketplace where users can:
+
+1. Post jobs when they need work done
+2. Post skills when they want to offer services
+3. Browse job posts and skill posts
+4. Search and filter posts
+5. Chat with other users
+6. Verify their account for offline jobs using KTP verification
+7. Report/block suspicious users
+8. Admin can manually approve KTP verification
+
+Main features:
+
+Authentication:
+
+* Register
+* Login
+* Logout
+* User profile setup
+* Role system: user and admin
+
+User profile:
+
+* Name
+* Email
+* Profile photo
+* Bio
+* Skills
+* Portfolio link
+* Location
+* Verification status
+* Created date
+
+Post system:
+Users can create two types of posts:
+
+1. Job Post
+2. Skill Post
+
+Job post fields:
+
+* Title
+* Description
+* Category
+* Budget
+* Online or Offline
+* City/location
+* Deadline
+* Required skills
+* Image optional
+* Created date
+* User ID
+
+Skill post fields:
+
+* Title
+* Description
+* Category
+* Price/rate
+* Online or Offline availability
+* City/location
+* Portfolio link
+* Image optional
+* Created date
+* User ID
+
+Rules:
+
+* Online job posts can be created by normal registered users
+* Offline job posts can only be created by users with approved KTP verification
+* Users can only contact/apply to offline jobs if their verification is approved
+* Public users only see “Verified for Offline Jobs” badge
+* Never show KTP, NIK, selfie, or private identity data publicly
+
+Pages/routes to build:
+
+* /
+* /login
+* /register
+* /home
+* /posts/[id]
+* /create
+* /profile
+* /profile/[id]
+* /chat
+* /chat/[id]
+* /verification
+* /admin
+* /admin/verifications
+* /admin/users
+* /admin/posts
+* /admin/reports
+
+Home page:
+
+* Search bar
+* Filter by post type: All, Job, Skill
+* Filter by work type: Online, Offline
+* Filter by category
+* Sort by newest
+* Post cards
+
+Post detail page:
+
+* Full post details
+* User profile preview
+* Verification badge
+* Contact/chat button
+* Report button
+* Offline job safety warning
+
+Chat:
+
+* Chat list
+* Chat detail
+* Text messages
+* Realtime messaging using Supabase Realtime
+* Show related post context in chat
+
+KTP verification:
+Users submit:
+
+* Legal name
+* KTP photo
+* Selfie holding KTP
+* Consent checkbox
+
+Verification statuses:
+
+* unverified
+* pending
+* approved
+* rejected
+
+Admin verification dashboard:
+
+* Show pending verification requests
+* View user data
+* View KTP photo using private signed URL
+* View selfie with KTP using private signed URL
+* Approve request
+* Reject request with reason
+* Request resubmission
+* Ban suspicious account
+
+Security and privacy:
+
+* Store KTP and selfie images in private Supabase Storage bucket
+* Do not use public URLs for KTP/selfie
+* Use signed temporary URLs for admin viewing only
+* Only admin can view verification files
+* Store NIK as a hash if NIK is collected
+* Do not display KTP, selfie, NIK, full address, or private identity data publicly
+* Add admin audit logs for verification actions
+* Add report/block feature
+* Add Row Level Security policies in Supabase
+* Users can only edit/delete their own posts
+* Admin can manage all posts/users/reports
+* Delete raw verification files after the review/retention period if implemented
+
+Database tables:
+
+1. users / profiles
+
+* id
+* full_name
+* email
+* avatar_url
+* bio
+* skills
+* portfolio_url
+* location
+* role
+* verification_status
+* offline_job_access
+* created_at
+
+2. posts
+
+* id
+* user_id
+* post_type: job or skill
+* title
+* description
+* category
+* budget_or_price
+* work_type: online or offline
+* location
+* deadline
+* portfolio_url
+* image_url
+* created_at
+* updated_at
+
+3. chats
+
+* id
+* post_id
+* participant_one_id
+* participant_two_id
+* created_at
+
+4. messages
+
+* id
+* chat_id
+* sender_id
+* message
+* created_at
+
+5. verification_requests
+
+* id
+* user_id
+* legal_name
+* nik_hash
+* ktp_image_path
+* selfie_image_path
+* status
+* rejection_reason
+* reviewed_by_admin_id
+* submitted_at
+* reviewed_at
+* raw_files_delete_at
+
+6. reports
+
+* id
+* reporter_id
+* reported_user_id
+* post_id
+* reason
+* description
+* status
+* created_at
+
+7. blocked_users
+
+* id
+* blocker_id
+* blocked_user_id
+* created_at
+
+8. admin_audit_logs
+
+* id
+* admin_id
+* action
+* target_user_id
+* target_post_id
+* verification_request_id
+* created_at
+
+UI requirements:
+
+* Follow the Figma design closely
+* Mobile-first layout
+* Clean marketplace cards
+* Clear verification badge
+* Friendly empty states
+* Loading states
+* Error states
+* Responsive admin dashboard for desktop
+* Bottom navigation for mobile
+* Use reusable components
+
+PWA requirements:
+
+* Add manifest
+* Add installable app support
+* Add app icon placeholders
+* Mobile-friendly viewport
+* Offline fallback page if possible
+
+Build the app step by step:
+
+1. Set up Next.js, TypeScript, Tailwind CSS
+2. Create layout and reusable UI components based on Figma
+3. Build authentication
+4. Build profile system
+5. Build post creation and feed
+6. Build post detail page
+7. Build chat system
+8. Build KTP verification submission
+9. Build admin verification approval dashboard
+10. Add report/block system
+11. Add Supabase RLS security policies
+12. Add PWA support
+13. Fix any design mismatch from the Figma design
+14. Test mobile responsiveness and core user flows
+
+Important:
+Before changing code, inspect the existing project structure.
+Do not remove existing working code unless necessary.
+Keep the code clean, simple, and beginner-friendly.
+Explain what files were changed after each major step.

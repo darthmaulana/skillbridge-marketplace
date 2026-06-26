@@ -1,0 +1,457 @@
+You are helping me build a mobile-first web-based Android app / PWA for a job and skill marketplace.
+
+Important workflow:
+Before starting any new work, always inspect the existing project first.
+Check the current files, folders, routes, components, database setup, UI, and previous code.
+Do not assume the project is empty.
+If a milestone or feature is already completed, do not rebuild it from zero.
+Instead, review it, fix issues if needed, and continue to the next unfinished milestone.
+
+App concept:
+The app connects people who need work done with people who offer skills.
+
+Users can create two types of posts:
+
+1. Job Post — for people who need someone to do a job
+2. Skill Post — for people who want to offer their skill and find work
+
+The app should support:
+
+* Online jobs
+* Offline jobs
+* KTP verification for offline jobs
+* Manual admin approval for verification
+* Chat between users
+* Report/block system
+* Admin dashboard
+
+Recommended tech stack:
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Supabase
+* Supabase Auth
+* Supabase PostgreSQL
+* Supabase Storage
+* Supabase Realtime
+* PWA support
+
+Design instruction:
+Follow the Figma design if it exists.
+Before coding UI, check if there are Figma screenshots, design references, or existing design components in the project.
+Match the layout, spacing, colors, typography, buttons, cards, badges, and navigation as closely as possible.
+If something from the design does not work well in code, fix it while keeping the same design direction.
+
+General rules:
+
+* Work milestone by milestone
+* Do not skip ahead
+* After each milestone, explain what was completed
+* Explain what files were changed
+* Mention what still needs to be done
+* Keep the code clean and beginner-friendly
+* Do not delete working code unless necessary
+* Do not break existing features
+* If something already exists, improve it instead of recreating it
+* Use reusable components where possible
+* Make the app mobile-first
+* Add loading states, error states, and empty states
+
+Milestone 0: Project inspection
+First, inspect the current project.
+
+Check:
+
+* package.json
+* app or pages directory
+* components
+* styles
+* Supabase setup
+* environment variables example
+* existing routes
+* existing UI components
+* existing database/schema files
+* existing auth logic
+* existing PWA setup
+
+Then tell me:
+
+* What is already done
+* What is missing
+* Which milestone should be worked on next
+
+Do not start major coding before this inspection.
+
+Milestone 1: Project setup
+Set up or verify:
+
+* Next.js
+* TypeScript
+* Tailwind CSS
+* Mobile-first layout
+* Basic folder structure
+* Reusable UI components
+* Environment variable setup
+* Supabase client setup
+
+Required folders/components:
+
+* components/
+* components/ui/
+* components/layout/
+* lib/
+* lib/supabase/
+* app/ or pages/
+* styles/
+
+Milestone 2: Core layout and navigation
+Build:
+
+* Mobile app layout
+* Bottom navigation
+* Header
+* Page container
+* Responsive desktop support
+* Protected layout for logged-in users
+* Admin layout for admin pages
+
+Bottom navigation:
+
+* Home
+* Search
+* Create
+* Chat
+* Profile
+
+Milestone 3: Authentication
+Build:
+
+* Register page
+* Login page
+* Logout
+* Auth state handling
+* Protected routes
+* User profile creation after register
+
+User profile fields:
+
+* id
+* full_name
+* email
+* avatar_url
+* bio
+* skills
+* portfolio_url
+* location
+* role
+* verification_status
+* offline_job_access
+* created_at
+
+Roles:
+
+* user
+* admin
+
+Milestone 4: Home feed and post cards
+Build:
+
+* Home feed
+* Search bar
+* Filter chips
+* Post cards
+* Empty state
+* Loading state
+
+Filters:
+
+* All
+* Jobs
+* Skills
+* Online
+* Offline
+* Category
+* Newest
+
+Post card should show:
+
+* Post type badge: Job / Skill
+* Work type badge: Online / Offline
+* Title
+* Short description
+* Budget or price
+* Category
+* Location
+* User name
+* Verified badge if verified
+* Posted time
+
+Milestone 5: Create post system
+Build create post page.
+
+Users can create:
+
+1. Job Post
+2. Skill Post
+
+Job Post fields:
+
+* Title
+* Description
+* Category
+* Budget
+* Online or Offline
+* Location
+* Deadline
+* Required skills
+* Image optional
+
+Skill Post fields:
+
+* Title
+* Description
+* Category
+* Price/rate
+* Online or Offline availability
+* Location
+* Portfolio link
+* Image optional
+
+Rules:
+
+* Online posts can be created by normal registered users
+* Offline posts can only be created by users with approved KTP verification
+* If unverified user tries to create offline post, redirect or show message asking them to verify first
+
+Milestone 6: Post detail page
+Build:
+
+* Full post detail page
+* User profile preview
+* Verification badge
+* Contact/chat button
+* Report button
+* Safety warning for offline jobs
+
+Rules:
+
+* Users can contact online job/skill posts normally
+* Users can only contact offline job/skill posts if they are verified
+* Exact offline location/contact details should be hidden until both users are verified
+
+Milestone 7: Profile system
+Build:
+
+* My profile page
+* Public profile page
+* Edit profile
+* User posts list
+* Verification status badge
+* Portfolio link
+* Skills list
+* Location
+
+Public profile should never show:
+
+* KTP photo
+* Selfie with KTP
+* NIK
+* Full private identity data
+
+Milestone 8: Chat system
+Build:
+
+* Chat list page
+* Chat detail page
+* Realtime messages using Supabase Realtime
+* Create or open chat from post detail page
+* Show related post context in chat
+* Basic text messages
+* Loading and empty states
+
+Rules:
+
+* Blocked users cannot message each other
+* Offline job chat requires both users to be verified
+
+Milestone 9: KTP verification submission
+Build verification page.
+
+Users submit:
+
+* Legal name
+* KTP photo
+* Selfie holding KTP
+* Consent checkbox
+
+Verification statuses:
+
+* unverified
+* pending
+* approved
+* rejected
+
+Rules:
+
+* KTP/selfie must be uploaded to private Supabase Storage bucket
+* Do not use public URLs for KTP/selfie
+* Show verification status clearly
+* If rejected, show rejection reason
+* User can resubmit after rejection
+
+Privacy message:
+“KTP and selfie are only used for account verification. They will never be shown publicly.”
+
+Milestone 10: Admin verification dashboard
+Build admin page:
+
+* /admin/verifications
+
+Admin can:
+
+* See pending verification requests
+* View user information
+* View KTP photo using signed temporary URL
+* View selfie with KTP using signed temporary URL
+* Approve verification
+* Reject verification with reason
+* Request resubmission
+* Ban suspicious account
+
+When approved:
+
+* verification_status = approved
+* offline_job_access = true
+* user receives “Verified for Offline Jobs” badge
+
+When rejected:
+
+* verification_status = rejected
+* offline_job_access = false
+* save rejection_reason
+
+Milestone 11: Admin dashboard
+Build:
+
+* /admin
+* /admin/users
+* /admin/posts
+* /admin/reports
+
+Admin can:
+
+* View users
+* Manage posts
+* View reports
+* Remove harmful posts
+* Ban or restrict users
+* View verification history
+
+Milestone 12: Report and block system
+Build:
+
+* Report post
+* Report user
+* Block user
+* Admin report review
+
+Report fields:
+
+* reporter_id
+* reported_user_id
+* post_id
+* reason
+* description
+* status
+* created_at
+
+Blocked user rules:
+
+* Blocked users cannot chat
+* Blocked users should be hidden from each other where possible
+
+Milestone 13: Supabase database and security
+Create or update database schema.
+
+Tables:
+
+1. profiles
+2. posts
+3. chats
+4. messages
+5. verification_requests
+6. reports
+7. blocked_users
+8. admin_audit_logs
+
+Add Row Level Security policies:
+
+* Users can read public posts
+* Users can create posts only as themselves
+* Users can edit/delete only their own posts
+* Users can read and edit only their own profile
+* Users cannot read private KTP/selfie data
+* Only admin can read verification requests
+* Only admin can approve/reject verification
+* Only chat participants can read messages
+* Only sender can create messages as themselves
+* Admin can manage reports, posts, users, and verification requests
+
+Milestone 14: PWA support
+Add:
+
+* manifest.json
+* app icons placeholders
+* mobile-friendly viewport
+* installable PWA support
+* offline fallback page if possible
+* app name and theme color
+
+Milestone 15: Design polish and bug fixing
+Review the full app.
+
+Check:
+
+* Mobile responsiveness
+* Figma design matching
+* Navigation
+* Auth flow
+* Create post flow
+* Offline verification restrictions
+* Chat flow
+* Admin approval flow
+* Report/block flow
+* Loading states
+* Empty states
+* Error states
+
+Fix anything broken or inconsistent.
+
+Milestone 16: Final testing checklist
+Test these user flows:
+
+1. New user registers
+2. User edits profile
+3. User creates online job post
+4. User creates skill post
+5. Unverified user tries to create offline post and is blocked
+6. User submits KTP verification
+7. Admin approves verification
+8. Verified user creates offline job post
+9. Verified user contacts another verified user
+10. User reports a post
+11. User blocks another user
+12. Admin reviews report
+13. Mobile PWA works properly
+
+After testing, provide:
+
+* Completed features
+* Known issues
+* Suggested next improvements
+* Files changed
+
+Start now with Milestone 0: Project inspection.
+Check what is already done before doing any new coding.

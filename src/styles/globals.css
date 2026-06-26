@@ -1,0 +1,112 @@
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: #f6eedb;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  background: #f6eedb;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.field {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 1rem;
+  background: var(--input-background);
+  padding: 0.625rem 0.75rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  outline: none;
+  box-shadow: 3px 3px 0 #26231d;
+}
+
+.field:focus {
+  box-shadow: 3px 3px 0 #26231d, 0 0 0 3px var(--ring);
+}
+
+.indie-wallpaper {
+  position: relative;
+  background:
+    radial-gradient(circle at 10% 14%, rgba(243, 201, 105, 0.34) 0 12%, transparent 13%),
+    radial-gradient(circle at 86% 22%, rgba(244, 144, 128, 0.24) 0 10%, transparent 11%),
+    linear-gradient(155deg, transparent 0 18%, rgba(191, 232, 223, 0.92) 18% 35%, transparent 35% 100%),
+    linear-gradient(24deg, transparent 0 45%, rgba(191, 232, 223, 0.9) 45% 59%, transparent 59% 100%),
+    #f6eedb;
+}
+
+.indie-wallpaper::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(38, 35, 29, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 35, 29, 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.35;
+}
+
+.indie-window {
+  border: 2px solid #26231d;
+  box-shadow: 8px 8px 0 #26231d;
+}
+
+.indie-titlebar {
+  border-bottom: 2px solid #26231d;
+  background: #efe4cb;
+  color: #26231d;
+}
+
+.indie-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid #26231d;
+  border-radius: 999px;
+  background: #fff9ea;
+}
+
+.avatar-fallback {
+  border: 2px solid #26231d;
+  background:
+    radial-gradient(circle at 28% 24%, #fff9ea 0 18%, transparent 19%),
+    linear-gradient(135deg, #f3c969 0%, #bfe8df 55%, #f49080 100%);
+  color: #26231d;
+}
+
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    user-select: text;
+  }
+}
