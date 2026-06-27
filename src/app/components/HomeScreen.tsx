@@ -68,13 +68,13 @@ export function HomeScreen({ posts, loading = false, error, onRetry, onPostClick
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="border-b-2 border-foreground bg-accent px-4 pb-6 pt-12 shadow-[0_4px_0_#26231d]">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="border-b-2 border-foreground bg-accent px-4 pb-6 pt-12 lg:shadow-[0_4px_0_#26231d]">
+        <div className="mb-5 flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-muted-foreground">{greeting}</p>
             <h2 className="text-foreground" style={{ fontWeight: 800, fontSize: "1.2rem" }}>What are you looking for?</h2>
           </div>
-          <button onClick={onNotifications} aria-label="Notifications" className="relative flex h-10 w-10 items-center justify-center rounded-xl border-2 border-foreground bg-card shadow-[3px_3px_0_#26231d]">
+          <button onClick={onNotifications} aria-label="Notifications" className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-card">
             <Bell size={20} className="text-foreground" />
             <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border border-foreground bg-[#f49080]" />
           </button>
@@ -84,7 +84,7 @@ export function HomeScreen({ posts, loading = false, error, onRetry, onPostClick
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search jobs, skills, categories..."
-            className="w-full rounded-2xl border-2 border-foreground bg-card py-3 pl-4 pr-12 text-sm text-foreground shadow-[4px_4px_0_#26231d] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-2xl border-2 border-foreground bg-card py-3 pl-4 pr-12 text-sm text-foreground shadow-[5px_5px_0_#26231d] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button
             type="button"

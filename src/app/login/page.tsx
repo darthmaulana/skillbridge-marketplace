@@ -16,8 +16,8 @@ export default function LoginPage() {
 
   return (
     <AppViewport>
-      <section className="indie-window relative mx-auto min-h-screen w-full max-w-md overflow-hidden bg-background lg:my-5 lg:h-[797px] lg:min-h-0 lg:rounded-[1.75rem]">
-        <div className="indie-titlebar absolute inset-x-0 top-0 z-[60] flex h-8 items-center justify-between px-3 text-[10px] font-bold">
+      <section className="relative mx-auto min-h-screen w-full max-w-md overflow-hidden bg-background lg:indie-window lg:my-5 lg:h-[797px] lg:min-h-0 lg:rounded-[1.75rem]">
+        <div className="indie-titlebar absolute inset-x-0 top-0 z-[60] hidden h-8 items-center justify-between px-3 text-[10px] font-bold lg:flex">
           <span className="flex items-center gap-1.5">
             <span className="indie-dot" />
             <span className="indie-dot bg-accent" />
@@ -25,7 +25,7 @@ export default function LoginPage() {
           <span>/login - skillbridge</span>
           <span className="text-muted-foreground">enjoy</span>
         </div>
-        <div className="absolute inset-x-0 bottom-0 top-8">
+        <div className="absolute inset-x-0 bottom-0 top-0 lg:top-8">
           <AuthScreen
             isDemoMode={isDemoMode}
             onSignIn={signIn}
