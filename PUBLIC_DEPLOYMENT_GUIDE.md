@@ -9,12 +9,6 @@ Start with the web app first. It is faster and easier to test.
 
 ## 1. Public Web App
 
-The project uses Next.js static export. After building, the public website files are generated in:
-
-```text
-out
-```
-
 Recommended host: Vercel.
 
 ### Deploy To Vercel
@@ -33,6 +27,12 @@ https://vercel.com
 NEXT_PUBLIC_SUPABASE_URL=https://zqensbznoeldfzcgoybs.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 NEXT_PUBLIC_ADMIN_EMAILS=anfaeydah@gmail.com
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+MIDTRANS_MERCHANT_ID=your_midtrans_merchant_id_here
+NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=your_midtrans_client_key_here
+MIDTRANS_SECRET_KEY=your_midtrans_backend_secret_here
+MIDTRANS_IS_PRODUCTION=false
 ```
 
 5. Set build command:
@@ -41,11 +41,15 @@ NEXT_PUBLIC_ADMIN_EMAILS=anfaeydah@gmail.com
 npm run build
 ```
 
-6. Set output directory:
+6. Leave output directory empty/default.
+
+Do not set output directory to:
 
 ```text
 out
 ```
+
+The Android build still uses static export internally, but the Vercel web app needs Next.js server routes for payments and Midtrans webhooks.
 
 7. Deploy.
 
@@ -115,3 +119,22 @@ Before this works for production, release signing must be configured in Android/
 5. Configure Android release signing.
 6. Build release `.aab` for Google Play.
 
+## Future Payment System
+
+Payment/escrow is planned as Milestone 17. When implemented, it will need:
+
+- Payment provider account, recommended: Midtrans or Xendit for Indonesia.
+- Sandbox keys first, then production keys after testing.
+- Server-side environment variables in Vercel for backend payment secrets.
+- A webhook URL from the live Vercel domain.
+- Supabase tables and RLS policies for orders, payments, disputes, and audit events.
+
+Do not place payment secret keys in client-side `NEXT_PUBLIC_` variables.
+
+Midtrans webhook URL:
+
+```text
+https://your-app.vercel.app/api/payments/midtrans-webhook
+```
+
+Use sandbox keys first. Rotate any backend payment secret that was pasted into chat or shared outside Vercel/Midtrans.

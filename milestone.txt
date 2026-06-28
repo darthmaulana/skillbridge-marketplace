@@ -455,3 +455,221 @@ After testing, provide:
 
 Start now with Milestone 0: Project inspection.
 Check what is already done before doing any new coding.
+
+Milestone 17: Platform payment and escrow system
+Goal:
+
+Make the app act as a trusted middleman so users feel safer when paying for jobs or skills through the platform.
+
+Recommended provider:
+
+* Midtrans or Xendit for Indonesia
+* Start in sandbox mode first
+* Use provider-hosted checkout when possible to reduce security risk
+* Never store card numbers, bank credentials, CVV, or raw payment secrets in Supabase
+
+Core payment model:
+
+* Buyer/client pays through the platform
+* Money is marked as held/in escrow while the job is in progress
+* Worker/provider only gets marked for release after the buyer confirms completion or admin resolves a dispute
+* Platform can track fees, payment status, and disputes
+
+Required tables:
+
+1. orders
+2. payments
+3. escrow_releases
+4. payment_events
+5. disputes
+6. payout_requests
+
+orders fields:
+
+* id
+* post_id
+* buyer_id
+* seller_id
+* amount
+* platform_fee
+* total_amount
+* currency
+* status
+* created_at
+* updated_at
+
+Order statuses:
+
+* pending_payment
+* paid_held
+* in_progress
+* completed
+* release_requested
+* released
+* disputed
+* cancelled
+* refunded
+
+payments fields:
+
+* id
+* order_id
+* provider
+* provider_reference
+* checkout_url
+* amount
+* status
+* paid_at
+* expires_at
+* created_at
+* updated_at
+
+Payment statuses:
+
+* pending
+* paid
+* failed
+* expired
+* cancelled
+* refunded
+
+payment_events fields:
+
+* id
+* payment_id
+* provider
+* event_type
+* event_payload
+* created_at
+
+disputes fields:
+
+* id
+* order_id
+* opened_by
+* reason
+* description
+* status
+* admin_id
+* resolution
+* created_at
+* updated_at
+
+Dispute statuses:
+
+* open
+* reviewing
+* resolved_release
+* resolved_refund
+* dismissed
+
+User flow:
+
+1. User opens a job or skill post.
+2. User taps Pay / Book Safely.
+3. App creates an order with pending_payment status.
+4. App creates a provider checkout session.
+5. User completes payment on the payment provider page.
+6. Provider webhook confirms payment.
+7. App marks payment as paid and order as paid_held.
+8. Seller/provider can start work.
+9. Buyer confirms completion.
+10. App marks order as release_requested or completed.
+11. Admin or automated rule marks escrow as released.
+
+Post detail changes:
+
+* Add Pay / Book Safely button for posts that are not owned by the current user
+* Show payment safety explanation before checkout
+* Show order/payment status after checkout
+* Disable payment if user is banned or post owner is banned
+* For offline jobs, require both users to be verified before payment
+
+Chat changes:
+
+* Show linked order status in the chat header if chat is connected to a paid order
+* Add quick actions:
+  * View order
+  * Confirm completion
+  * Open dispute
+
+New pages:
+
+* /orders
+* /orders/[id]
+* /orders/[id]/payment
+* /orders/[id]/dispute
+* /admin/payments
+* /admin/disputes
+
+Admin can:
+
+* View all orders and payments
+* Review disputes
+* Mark dispute as release to seller
+* Mark dispute as refund to buyer
+* View provider webhook events
+* Search by user, post, order id, or payment reference
+
+Security rules:
+
+* Users can only read orders where they are buyer or seller
+* Users cannot directly mark payments as paid
+* Only trusted webhook/admin logic can update payment status to paid
+* Only admin can resolve disputes
+* Only admin/service role can release escrow
+* Payment provider secret keys must only live in server-side environment variables
+* Public client code can only use public keys or checkout URLs
+
+Webhook requirements:
+
+* Add a server endpoint for provider payment notifications
+* Verify webhook signature before trusting any event
+* Save every webhook payload into payment_events for audit
+* Make webhook handling idempotent so repeated events do not double-release or double-update payments
+* Never rely only on frontend redirect success for payment confirmation
+
+Free-tier friendly plan:
+
+* Use Supabase free tier database tables and RLS
+* Use Vercel serverless functions for checkout creation and webhooks
+* Avoid background workers at first
+* Keep uploaded proof/dispute images small if added later
+* Start with manual/admin release instead of automatic payouts
+
+MVP scope:
+
+* Create order
+* Create hosted checkout
+* Confirm payment by webhook
+* Show order status
+* Buyer confirms completion
+* Admin manually releases or resolves disputes
+
+Later improvements:
+
+* Seller payout tracking
+* Automatic release after buyer confirmation window
+* Refund flow
+* Promo codes
+* Platform fee dashboard
+* Payment receipts
+* Email/payment notifications
+* Better fraud detection
+
+Milestone 17 testing checklist:
+
+1. Buyer creates order from post detail.
+2. Buyer reaches hosted checkout page.
+3. Cancelled payment keeps order pending_payment or cancelled.
+4. Successful sandbox payment updates payment to paid.
+5. Successful sandbox payment updates order to paid_held.
+6. Buyer and seller can view the order.
+7. Unrelated user cannot view the order.
+8. Chat shows linked order status.
+9. Buyer confirms completion.
+10. Admin can release payment.
+11. Buyer can open dispute.
+12. Admin can resolve dispute as release or refund.
+13. Webhook replay does not duplicate updates.
+14. Banned users cannot create or receive paid orders.

@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
+const isStaticExport = process.env.NEXT_OUTPUT_EXPORT === "true";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  output: "export",
+  ...(isStaticExport ? { output: "export" as const } : {}),
   images: {
     unoptimized: true,
   },

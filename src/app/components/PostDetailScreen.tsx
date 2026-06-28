@@ -1,4 +1,4 @@
-﻿import { AlertTriangle, Calendar, ChevronLeft, Clock, ExternalLink, Flag, Link2, MapPin, MessageCircle, Shield, Star, Users, Wifi } from "lucide-react";
+import { AlertTriangle, Calendar, ChevronLeft, Clock, CreditCard, ExternalLink, Flag, Link2, MapPin, MessageCircle, Shield, Star, Users, Wifi } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { Post } from "./shared/PostCard";
 
@@ -9,14 +9,18 @@ interface Props {
   onReport: () => void;
   onVerify: () => void;
   onProfile: () => void;
+  onPay: () => Promise<string | void>;
   isViewerVerified: boolean;
 }
 
-export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onProfile, isViewerVerified }: Props) {
+export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onProfile, onPay, isViewerVerified }: Props) {
   const [openingChat, setOpeningChat] = useState(false);
+  const [openingPayment, setOpeningPayment] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const offlineContactAllowed = post.mode === "online" || (isViewerVerified && post.verified);
   const canContact = !post.owner && offlineContactAllowed;
+  const canPay = !post.owner && offlineContactAllowed;
   const visibleLocation = post.mode === "offline" && offlineContactAllowed ? post.exactLocation || post.location : post.location;
 
   const contactLabel = post.owner
@@ -48,7 +52,7 @@ export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onP
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-32">
+      <div className="flex-1 overflow-y-auto pb-44">
         <div className="-mt-4 rounded-t-3xl bg-card px-5 pb-4 pt-6 shadow-sm">
           <div className="mb-3 flex items-start justify-between gap-3">
             <h1 className="flex-1 text-foreground" style={{ fontWeight: 700, fontSize: "1.2rem", lineHeight: 1.35 }}>{post.title}</h1>
@@ -62,6 +66,22 @@ export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onP
         </div>
 
         <div className="px-5 pt-4">
+          {!post.owner && (
+            <DetailCard title="Safe payment">
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-foreground bg-[#f3c969]">
+                  <CreditCard size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Book through SkillBridge</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Pay through the platform so the order can be tracked. Payment confirmation comes from Midtrans, not screenshots or chat claims.
+                  </p>
+                </div>
+              </div>
+            </DetailCard>
+          )}
+
           {post.mode === "offline" && (
             <div className="mb-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <AlertTriangle size={18} className="mt-0.5 flex-shrink-0 text-amber-600" />
@@ -125,25 +145,45 @@ export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onP
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 mx-auto flex max-w-md gap-3 border-t border-border bg-card px-4 pb-4 pt-4" style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}>
-        <button onClick={onReport} aria-label="Report post" className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-border"><Flag size={18} className="text-muted-foreground" /></button>
-        <button
-          onClick={post.mode === "offline" && !isViewerVerified ? onVerify : async () => {
-            setOpeningChat(true);
-            setChatError(null);
-            const error = await onChat();
-            if (error) setChatError(error);
-            setOpeningChat(false);
-          }}
-          disabled={openingChat || (!canContact && !(post.mode === "offline" && !isViewerVerified && !post.owner))}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 ${canContact || (post.mode === "offline" && !isViewerVerified && !post.owner) ? "bg-primary text-white" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
-          style={{ fontWeight: 600 }}
-        >
-          {post.mode === "offline" && !isViewerVerified ? <Shield size={18} /> : <MessageCircle size={18} />}
-          {contactLabel}
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 mx-auto flex max-w-md flex-col gap-2 border-t border-border bg-card px-4 pb-4 pt-3" style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}>
+        {!post.owner && (
+          <button
+            onClick={post.mode === "offline" && !isViewerVerified ? onVerify : async () => {
+              setOpeningPayment(true);
+              setPaymentError(null);
+              const error = await onPay();
+              if (error) setPaymentError(error);
+              setOpeningPayment(false);
+            }}
+            disabled={openingPayment || (!canPay && !(post.mode === "offline" && !isViewerVerified))}
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3 ${canPay || (post.mode === "offline" && !isViewerVerified) ? "bg-primary text-primary-foreground" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
+            style={{ fontWeight: 700 }}
+          >
+            {post.mode === "offline" && !isViewerVerified ? <Shield size={18} /> : <CreditCard size={18} />}
+            {openingPayment ? "Opening Payment..." : post.mode === "offline" && !isViewerVerified ? "Verify to Pay Safely" : "Pay / Book Safely"}
+          </button>
+        )}
+        <div className="flex gap-3">
+          <button onClick={onReport} aria-label="Report post" className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-border"><Flag size={18} className="text-muted-foreground" /></button>
+          <button
+            onClick={post.mode === "offline" && !isViewerVerified ? onVerify : async () => {
+              setOpeningChat(true);
+              setChatError(null);
+              const error = await onChat();
+              if (error) setChatError(error);
+              setOpeningChat(false);
+            }}
+            disabled={openingChat || (!canContact && !(post.mode === "offline" && !isViewerVerified && !post.owner))}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 ${canContact || (post.mode === "offline" && !isViewerVerified && !post.owner) ? "bg-accent text-foreground" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
+            style={{ fontWeight: 600 }}
+          >
+            {post.mode === "offline" && !isViewerVerified ? <Shield size={18} /> : <MessageCircle size={18} />}
+            {contactLabel}
+          </button>
+        </div>
       </div>
       {chatError && <div className="fixed bottom-20 left-4 right-4 mx-auto max-w-sm rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-destructive shadow-sm">{chatError}</div>}
+      {paymentError && <div className="fixed bottom-32 left-4 right-4 mx-auto max-w-sm rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-destructive shadow-sm">{paymentError}</div>}
     </div>
   );
 }
@@ -159,4 +199,5 @@ function DetailCard({ title, children }: { title: string; children: ReactNode })
 function DetailRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return <div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">{icon}</span><span className="text-muted-foreground">{label}</span><span className="ml-auto font-medium text-foreground">{value}</span></div>;
 }
+
 
