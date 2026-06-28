@@ -1,4 +1,4 @@
-import { AlertTriangle, Calendar, ChevronLeft, Clock, CreditCard, ExternalLink, Flag, Link2, MapPin, MessageCircle, Shield, Star, Users, Wifi } from "lucide-react";
+import { AlertTriangle, Calendar, ChevronLeft, Clock, CreditCard, ExternalLink, Flag, Link2, MapPin, MessageCircle, Shield, Users, Wifi } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { Post } from "./shared/PostCard";
 
@@ -9,18 +9,14 @@ interface Props {
   onReport: () => void;
   onVerify: () => void;
   onProfile: () => void;
-  onPay: () => Promise<string | void>;
   isViewerVerified: boolean;
 }
 
-export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onProfile, onPay, isViewerVerified }: Props) {
+export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onProfile, isViewerVerified }: Props) {
   const [openingChat, setOpeningChat] = useState(false);
-  const [openingPayment, setOpeningPayment] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
   const offlineContactAllowed = post.mode === "online" || (isViewerVerified && post.verified);
   const canContact = !post.owner && offlineContactAllowed;
-  const canPay = !post.owner && offlineContactAllowed;
   const visibleLocation = post.mode === "offline" && offlineContactAllowed ? post.exactLocation || post.location : post.location;
 
   const contactLabel = post.owner
@@ -75,7 +71,7 @@ export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onP
                 <div>
                   <p className="text-sm font-semibold text-foreground">Book through SkillBridge</p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    Pay through the platform so the order can be tracked. Payment confirmation comes from Midtrans, not screenshots or chat claims.
+                    Chat first, agree on the work and price, then the post owner can send you a bill. Pay only through the bill inside SkillBridge.
                   </p>
                 </div>
               </div>
@@ -146,23 +142,6 @@ export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onP
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 mx-auto flex max-w-md flex-col gap-2 border-t border-border bg-card px-4 pb-4 pt-3" style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}>
-        {!post.owner && (
-          <button
-            onClick={post.mode === "offline" && !isViewerVerified ? onVerify : async () => {
-              setOpeningPayment(true);
-              setPaymentError(null);
-              const error = await onPay();
-              if (error) setPaymentError(error);
-              setOpeningPayment(false);
-            }}
-            disabled={openingPayment || (!canPay && !(post.mode === "offline" && !isViewerVerified))}
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3 ${canPay || (post.mode === "offline" && !isViewerVerified) ? "bg-primary text-primary-foreground" : "cursor-not-allowed bg-muted text-muted-foreground"}`}
-            style={{ fontWeight: 700 }}
-          >
-            {post.mode === "offline" && !isViewerVerified ? <Shield size={18} /> : <CreditCard size={18} />}
-            {openingPayment ? "Opening Payment..." : post.mode === "offline" && !isViewerVerified ? "Verify to Pay Safely" : "Pay / Book Safely"}
-          </button>
-        )}
         <div className="flex gap-3">
           <button onClick={onReport} aria-label="Report post" className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-border"><Flag size={18} className="text-muted-foreground" /></button>
           <button
@@ -183,7 +162,6 @@ export function PostDetailScreen({ post, onBack, onChat, onReport, onVerify, onP
         </div>
       </div>
       {chatError && <div className="fixed bottom-20 left-4 right-4 mx-auto max-w-sm rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-destructive shadow-sm">{chatError}</div>}
-      {paymentError && <div className="fixed bottom-32 left-4 right-4 mx-auto max-w-sm rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-center text-xs text-destructive shadow-sm">{paymentError}</div>}
     </div>
   );
 }

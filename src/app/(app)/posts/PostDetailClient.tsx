@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { PostDetailScreen } from "@/app/components/PostDetailScreen";
 import { useAppState } from "@/components/providers/AppStateProvider";
 import { openChatForPost } from "@/lib/chat";
-import { createPaymentCheckout } from "@/lib/paymentClient";
 
 export function PostDetailClient({ postId }: { postId?: string | null }) {
   const router = useRouter();
@@ -41,14 +40,6 @@ export function PostDetailClient({ postId }: { postId?: string | null }) {
       onReport={() => router.push(`/posts/report?id=${encodeURIComponent(post.id)}`)}
       onVerify={() => router.push("/verification")}
       onProfile={() => router.push(`/profile/view?id=${encodeURIComponent(post.userId)}`)}
-      onPay={async () => {
-        const result = await createPaymentCheckout(post.id);
-        if (result.checkoutUrl) {
-          window.location.href = result.checkoutUrl;
-          return;
-        }
-        return result.error;
-      }}
     />
   );
 }

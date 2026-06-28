@@ -9,6 +9,7 @@ export interface ChatSummary {
   postId: string | null;
   postTitle: string;
   postMode: "online" | "offline" | null;
+  postOwnerId: string | null;
   otherUserId: string;
   otherName: string;
   otherAvatarUrl: string | null;
@@ -251,6 +252,7 @@ function mapChatRows(
       postId: chat.post_id,
       postTitle: post?.title || "General conversation",
       postMode: post?.mode ?? null,
+      postOwnerId: post?.userId ?? null,
       otherUserId,
       otherName,
       otherAvatarUrl: otherProfile?.avatar_url ?? null,

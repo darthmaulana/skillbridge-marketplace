@@ -1,12 +1,19 @@
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   post_id uuid not null references public.posts(id) on delete cascade,
+  chat_id uuid references public.chats(id) on delete set null,
   buyer_id uuid not null references public.profiles(id) on delete cascade,
   seller_id uuid not null references public.profiles(id) on delete cascade,
   amount integer not null check (amount > 0),
   platform_fee integer not null default 0 check (platform_fee >= 0),
   total_amount integer not null check (total_amount > 0),
   currency text not null default 'IDR',
+  bill_title text,
+  bill_note text,
+  completion_url text,
+  completion_note text,
+  completion_submitted_at timestamptz,
+  accepted_at timestamptz,
   status text not null default 'pending_payment' check (status in (
     'pending_payment',
     'paid_held',
@@ -21,6 +28,14 @@ create table if not exists public.orders (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.orders add column if not exists chat_id uuid references public.chats(id) on delete set null;
+alter table public.orders add column if not exists bill_title text;
+alter table public.orders add column if not exists bill_note text;
+alter table public.orders add column if not exists completion_url text;
+alter table public.orders add column if not exists completion_note text;
+alter table public.orders add column if not exists completion_submitted_at timestamptz;
+alter table public.orders add column if not exists accepted_at timestamptz;
 
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
@@ -99,6 +114,7 @@ create table if not exists public.payout_requests (
 create index if not exists orders_buyer_id_idx on public.orders(buyer_id);
 create index if not exists orders_seller_id_idx on public.orders(seller_id);
 create index if not exists orders_post_id_idx on public.orders(post_id);
+create index if not exists orders_chat_id_idx on public.orders(chat_id);
 create index if not exists payments_order_id_idx on public.payments(order_id);
 create index if not exists payment_events_payment_id_idx on public.payment_events(payment_id);
 create index if not exists disputes_order_id_idx on public.disputes(order_id);

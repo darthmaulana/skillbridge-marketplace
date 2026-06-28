@@ -1,19 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, AlertTriangle, ChevronLeft, Send, Shield, Wifi, Users } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle, ChevronLeft, CreditCard, Link2, Plus, Send, Shield, Wifi, Users } from "lucide-react";
 import type { ChatMessage, ChatThread } from "@/lib/chat";
+import type { ChatOrder } from "@/lib/paymentClient";
 
 interface Props {
   thread: ChatThread;
+  currentUserId: string;
+  orders: ChatOrder[];
   onBack: () => void;
   onSend: (message: string) => Promise<{ data?: ChatMessage; error?: string }>;
+  onCreateBill: (input: { amount: number; title: string; note?: string }) => Promise<string | void>;
+  onSubmitCompletion: (orderId: string, input: { completionUrl?: string; completionNote?: string }) => Promise<string | void>;
+  onAcceptCompletion: (orderId: string) => Promise<string | void>;
 }
 
-export function ChatDetailScreen({ thread, onBack, onSend }: Props) {
+export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onSend, onCreateBill, onSubmitCompletion, onAcceptCompletion }: Props) {
   const [messages, setMessages] = useState(thread.messages);
   const [input, setInput] = useState("");
+  const [billOpen, setBillOpen] = useState(false);
+  const [billTitle, setBillTitle] = useState(thread.chat.postTitle);
+  const [billAmount, setBillAmount] = useState("");
+  const [billNote, setBillNote] = useState("");
+  const [completionByOrder, setCompletionByOrder] = useState<Record<string, { url: string; note: string }>>({});
   const [sending, setSending] = useState(false);
+  const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const canCreateBill = thread.chat.postOwnerId === currentUserId;
 
   useEffect(() => setMessages(thread.messages), [thread.messages]);
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
@@ -33,6 +46,46 @@ export function ChatDetailScreen({ thread, onBack, onSend }: Props) {
       setMessages((current) => current.some((item) => item.id === result.data?.id) ? current : [...current, result.data!]);
       setInput("");
     }
+  };
+
+  const createBill = async () => {
+    const amount = Number(billAmount);
+    if (!billTitle.trim() || !Number.isFinite(amount) || amount < 1000 || working) {
+      setError("Add a bill title and amount of at least Rp 1.000.");
+      return;
+    }
+    setWorking(true);
+    setError(null);
+    const result = await onCreateBill({ amount, title: billTitle, note: billNote });
+    setWorking(false);
+    if (result) {
+      setError(result);
+      return;
+    }
+    setBillOpen(false);
+    setBillAmount("");
+    setBillNote("");
+  };
+
+  const submitCompletion = async (orderId: string) => {
+    const completion = completionByOrder[orderId] ?? { url: "", note: "" };
+    if (!completion.url.trim() && !completion.note.trim()) {
+      setError("Add a link or note before submitting completion.");
+      return;
+    }
+    setWorking(true);
+    setError(null);
+    const result = await onSubmitCompletion(orderId, { completionUrl: completion.url, completionNote: completion.note });
+    setWorking(false);
+    if (result) setError(result);
+  };
+
+  const acceptCompletion = async (orderId: string) => {
+    setWorking(true);
+    setError(null);
+    const result = await onAcceptCompletion(orderId);
+    setWorking(false);
+    if (result) setError(result);
   };
 
   return (
@@ -85,6 +138,49 @@ export function ChatDetailScreen({ thread, onBack, onSend }: Props) {
       )}
 
       <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-3">
+        {(canCreateBill || orders.length > 0) && (
+          <section className="mb-2 rounded-2xl border-2 border-foreground bg-card p-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold">Safe payment bills</p>
+                <p className="text-xs text-muted-foreground">Agree in chat, then pay through SkillBridge.</p>
+              </div>
+              {canCreateBill && (
+                <button onClick={() => setBillOpen((open) => !open)} className="flex items-center gap-1 rounded-full border border-foreground bg-[#f3c969] px-3 py-1.5 text-xs font-bold">
+                  <Plus size={13} /> Bill
+                </button>
+              )}
+            </div>
+
+            {billOpen && (
+              <div className="mb-3 space-y-2 rounded-xl border border-border bg-muted p-3">
+                <input value={billTitle} onChange={(event) => setBillTitle(event.target.value)} maxLength={120} placeholder="Bill title" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none" />
+                <input value={billAmount} onChange={(event) => setBillAmount(event.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Amount, for example 150000" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none" />
+                <textarea value={billNote} onChange={(event) => setBillNote(event.target.value)} maxLength={1000} placeholder="Optional note about scope, deadline, or deliverables" className="min-h-20 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none" />
+                <button onClick={() => void createBill()} disabled={working} className="w-full rounded-xl bg-primary px-3 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
+                  {working ? "Creating..." : "Create Bill for Buyer"}
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {orders.length === 0 && <p className="text-xs text-muted-foreground">No bill yet. Create one after both users agree on price.</p>}
+              {orders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  currentUserId={currentUserId}
+                  working={working}
+                  completion={completionByOrder[order.id] ?? { url: "", note: "" }}
+                  onCompletionChange={(completion) => setCompletionByOrder((current) => ({ ...current, [order.id]: completion }))}
+                  onSubmitCompletion={() => void submitCompletion(order.id)}
+                  onAccept={() => void acceptCompletion(order.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {messages.length === 0 && (
           <div className="my-auto text-center text-sm text-muted-foreground">No messages yet. Start the conversation.</div>
         )}
@@ -130,6 +226,86 @@ export function ChatDetailScreen({ thread, onBack, onSend }: Props) {
           </button>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function OrderCard({
+  order,
+  currentUserId,
+  working,
+  completion,
+  onCompletionChange,
+  onSubmitCompletion,
+  onAccept,
+}: {
+  order: ChatOrder;
+  currentUserId: string;
+  working: boolean;
+  completion: { url: string; note: string };
+  onCompletionChange: (completion: { url: string; note: string }) => void;
+  onSubmitCompletion: () => void;
+  onAccept: () => void;
+}) {
+  const payment = order.payments?.[0];
+  const isBuyer = order.buyer_id === currentUserId;
+  const isSeller = order.seller_id === currentUserId;
+  const canPay = isBuyer && order.status === "pending_payment" && payment?.checkout_url;
+  const canComplete = isSeller && ["paid_held", "in_progress", "release_requested"].includes(order.status);
+  const canAccept = isBuyer && order.status === "release_requested";
+
+  return (
+    <div className="rounded-xl border border-border bg-background p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold">{order.bill_title || "SkillBridge bill"}</p>
+          {order.bill_note && <p className="mt-1 text-xs text-muted-foreground">{order.bill_note}</p>}
+        </div>
+        <span className="rounded-full bg-muted px-2 py-1 text-xs capitalize text-muted-foreground">{order.status.replace(/_/g, " ")}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <BillAmount label="Work" value={order.amount} />
+        <BillAmount label="Total" value={order.total_amount} strong />
+      </div>
+
+      {canPay && (
+        <a href={payment.checkout_url!} className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-bold text-primary-foreground">
+          <CreditCard size={15} /> Pay Bill Safely
+        </a>
+      )}
+
+      {canComplete && (
+        <div className="mt-3 space-y-2">
+          <input value={completion.url} onChange={(event) => onCompletionChange({ ...completion, url: event.target.value })} placeholder="Completion link, e.g. Drive/Figma/GitHub" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs outline-none" />
+          <textarea value={completion.note} onChange={(event) => onCompletionChange({ ...completion, note: event.target.value })} placeholder="Completion note" className="min-h-16 w-full rounded-xl border border-border bg-card px-3 py-2 text-xs outline-none" />
+          <button onClick={onSubmitCompletion} disabled={working} className="w-full rounded-xl border border-foreground bg-[#f3c969] px-3 py-2 text-sm font-bold disabled:opacity-60">
+            Submit Completion
+          </button>
+        </div>
+      )}
+
+      {(order.completion_url || order.completion_note) && (
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+          <p className="mb-1 flex items-center gap-1 font-bold"><CheckCircle size={13} /> Completion submitted</p>
+          {order.completion_url && <a href={order.completion_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 underline"><Link2 size={12} />Open completion link</a>}
+          {order.completion_note && <p className="mt-1 whitespace-pre-wrap">{order.completion_note}</p>}
+        </div>
+      )}
+
+      {canAccept && (
+        <button onClick={onAccept} disabled={working} className="mt-3 w-full rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-60">
+          Accept Work and Release
+        </button>
+      )}
+    </div>
+  );
+}
+
+function BillAmount({ label, value, strong = false }: { label: string; value: number; strong?: boolean }) {
+  return (
+    <div className="rounded-lg bg-muted px-2 py-1.5">
+      <p className="text-muted-foreground">{label}</p>
+      <p className={strong ? "font-bold text-primary" : "font-semibold text-foreground"}>Rp {Number(value).toLocaleString("id-ID")}</p>
     </div>
   );
 }

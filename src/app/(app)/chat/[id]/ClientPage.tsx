@@ -5,12 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { ChatDetailScreen } from "@/app/components/ChatDetailScreen";
 import { useAppState } from "@/components/providers/AppStateProvider";
 import { loadChatThread, sendChatMessage, subscribeToChatMessages, type ChatThread } from "@/lib/chat";
+import { acceptOrderCompletion, createBillCheckout, loadChatOrders, submitOrderCompletion, type ChatOrder } from "@/lib/paymentClient";
 
 export default function ClientPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const { posts, profile } = useAppState();
   const [thread, setThread] = useState<ChatThread | null>(null);
+  const [orders, setOrders] = useState<ChatOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +42,15 @@ export default function ClientPage() {
     };
   }, [params.id, posts, profile]);
 
+  const refreshOrders = async () => {
+    const result = await loadChatOrders(params.id);
+    if (result.data) setOrders(result.data);
+  };
+
+  useEffect(() => {
+    void refreshOrders();
+  }, [params.id]);
+
   if (loading || !profile) {
     return <div className="grid h-full place-items-center text-sm text-muted-foreground">Loading conversation...</div>;
   }
@@ -59,8 +70,25 @@ export default function ClientPage() {
   return (
     <ChatDetailScreen
       thread={thread}
+      currentUserId={profile.id}
+      orders={orders}
       onBack={() => router.push("/chat")}
       onSend={(message) => sendChatMessage(params.id, message, profile)}
+      onCreateBill={async (input) => {
+        const result = await createBillCheckout({ chatId: params.id, ...input });
+        await refreshOrders();
+        return result.error;
+      }}
+      onSubmitCompletion={async (orderId, input) => {
+        const result = await submitOrderCompletion(orderId, input);
+        await refreshOrders();
+        return result.error;
+      }}
+      onAcceptCompletion={async (orderId) => {
+        const result = await acceptOrderCompletion(orderId);
+        await refreshOrders();
+        return result.error;
+      }}
     />
   );
 }

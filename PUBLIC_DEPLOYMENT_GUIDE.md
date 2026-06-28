@@ -121,7 +121,19 @@ Before this works for production, release signing must be configured in Android/
 
 ## Future Payment System
 
-Payment/escrow is planned as Milestone 17. When implemented, it will need:
+Payment/escrow is planned as Milestone 17. The implemented flow should work like this:
+
+1. User 1 opens a job/skill post.
+2. User 1 starts a chat with User 2, the post owner.
+3. Both users agree on the work scope and amount in chat.
+4. User 2 creates a bill inside the chat.
+5. User 1 pays the bill through SkillBridge/Midtrans.
+6. The app marks the payment as held by the platform workflow.
+7. User 2 submits completion proof, for example a link and note.
+8. User 1 accepts the work if satisfied.
+9. Admin can process payout/release according to the platform rules.
+
+This system needs:
 
 - Payment provider account, recommended: Midtrans or Xendit for Indonesia.
 - Sandbox keys first, then production keys after testing.
