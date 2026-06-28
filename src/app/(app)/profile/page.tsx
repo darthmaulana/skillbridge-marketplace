@@ -32,6 +32,8 @@ export default function ProfilePage() {
       isOwnProfile
       onEdit={() => router.push("/profile/edit")}
       onVerify={() => router.push("/verification")}
+      onAbout={() => router.push("/about")}
+      onTerms={() => router.push("/terms")}
       onPostClick={(post) => router.push(`/posts?id=${encodeURIComponent(post.id)}`)}
       onLogout={async () => {
         await signOut();

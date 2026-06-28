@@ -16,6 +16,8 @@ const routeTitles: Record<string, string> = {
   "/chat": "/messages - skillbridge",
   "/profile": "/me - skillbridge",
   "/create": "/create-post - skillbridge",
+  "/terms": "/terms - skillbridge",
+  "/about": "/about - skillbridge",
 };
 
 export function MobileAppShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {

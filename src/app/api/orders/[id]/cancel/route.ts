@@ -26,13 +26,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("id,seller_id,status,chat_id,payments(status)")
+    .select("id,buyer_id,seller_id,status,chat_id,payments(status)")
     .eq("id", id)
     .maybeSingle();
 
   if (orderError) return corsJson({ error: orderError.message }, { status: 500 });
   if (!order) return corsJson({ error: "Bill not found." }, { status: 404 });
-  if (order.seller_id !== userData.user.id) return corsJson({ error: "Only the post owner can cancel this bill." }, { status: 403 });
+  if (![order.buyer_id, order.seller_id].includes(userData.user.id)) {
+    return corsJson({ error: "Only order participants can cancel this unpaid bill." }, { status: 403 });
+  }
   if (order.status !== "pending_payment") {
     return corsJson({ error: "Only unpaid bills can be cancelled. Paid orders need refund/dispute handling." }, { status: 400 });
   }
@@ -60,7 +62,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await supabase.from("messages").insert({
       chat_id: order.chat_id,
       sender_id: userData.user.id,
-      message: `Bill ${id.slice(0, 8)} was cancelled by the post owner.`,
+      message: `Bill ${id.slice(0, 8)} was cancelled before payment.`,
     });
   }
 

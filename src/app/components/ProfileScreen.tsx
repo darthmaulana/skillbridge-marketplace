@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Edit2, ExternalLink, Flag, Link2, LogOut, MapPin, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit2, ExternalLink, FileText, Flag, Info, Link2, LogOut, MapPin, Shield } from "lucide-react";
 import type { PublicProfile } from "@/lib/auth";
 import { PostCard, type Post } from "./shared/PostCard";
 
@@ -11,6 +11,8 @@ interface Props {
   onVerify?: () => void;
   onLogout?: () => void;
   onReport?: () => void;
+  onTerms?: () => void;
+  onAbout?: () => void;
   onPostClick: (post: Post) => void;
 }
 
@@ -37,6 +39,8 @@ export function ProfileScreen({
   onVerify,
   onLogout,
   onReport,
+  onTerms,
+  onAbout,
   onPostClick,
 }: Props) {
   const userPosts = posts
@@ -125,6 +129,27 @@ export function ProfileScreen({
             <ChevronRight size={18} className="text-amber-600" />
           </button>
         </div>
+      )}
+
+      {isOwnProfile && (
+        <section className="mx-4 mt-3 rounded-2xl border border-border bg-card p-2">
+          <button onClick={onAbout} className="flex w-full items-center gap-3 rounded-xl p-3 text-left active:bg-muted">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-foreground"><Info size={18} /></span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">About SkillBridge</p>
+              <p className="text-xs text-muted-foreground">App information and contact number.</p>
+            </div>
+            <ChevronRight size={18} className="text-muted-foreground" />
+          </button>
+          <button onClick={onTerms} className="flex w-full items-center gap-3 rounded-xl p-3 text-left active:bg-muted">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fff0b8] text-foreground"><FileText size={18} /></span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">Terms and Conditions</p>
+              <p className="text-xs text-muted-foreground">Rules for chat, payment, safety, and disputes.</p>
+            </div>
+            <ChevronRight size={18} className="text-muted-foreground" />
+          </button>
+        </section>
       )}
 
       <section className="mx-4 mt-5">

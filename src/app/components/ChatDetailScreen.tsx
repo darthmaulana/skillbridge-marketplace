@@ -28,7 +28,16 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onOpen
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const canCreateBill = thread.chat.postOwnerId === currentUserId;
+  const isPostOwner = thread.chat.postOwnerId === currentUserId;
+  const canCreateBill = thread.chat.postType === "skill"
+    ? isPostOwner
+    : thread.chat.postType === "job"
+      ? !isPostOwner && Boolean(thread.chat.postOwnerId)
+      : false;
+  const billButtonLabel = thread.chat.postType === "job" ? "Send Work Bill" : "Create Bill";
+  const billHint = thread.chat.postType === "job"
+    ? "For job posts, the worker sends a bill to the job poster."
+    : "For skill posts, the skill owner sends a bill to the requester.";
 
   useEffect(() => setMessages(thread.messages), [thread.messages]);
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
@@ -158,7 +167,7 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onOpen
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold">Safe payment bills</p>
-                <p className="text-xs text-muted-foreground">Agree in chat, then pay through SkillBridge.</p>
+                <p className="text-xs text-muted-foreground">{billHint}</p>
               </div>
               {canCreateBill && (
                 <button onClick={() => setBillOpen((open) => !open)} className="flex items-center gap-1 rounded-full border border-foreground bg-[#f3c969] px-3 py-1.5 text-xs font-bold">
@@ -173,7 +182,7 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onOpen
                 <input value={billAmount} onChange={(event) => setBillAmount(event.target.value.replace(/[^\d]/g, ""))} inputMode="numeric" placeholder="Amount, for example 150000" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none" />
                 <textarea value={billNote} onChange={(event) => setBillNote(event.target.value)} maxLength={1000} placeholder="Optional note about scope, deadline, or deliverables" className="min-h-20 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none" />
                 <button onClick={() => void createBill()} disabled={working} className="w-full rounded-xl bg-primary px-3 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
-                  {working ? "Creating..." : "Create Bill for Buyer"}
+                  {working ? "Creating..." : billButtonLabel}
                 </button>
               </div>
             )}
@@ -269,7 +278,7 @@ function OrderCard({
   const isBuyer = order.buyer_id === currentUserId;
   const isSeller = order.seller_id === currentUserId;
   const canPay = isBuyer && order.status === "pending_payment" && payment?.checkout_url;
-  const canCancel = isSeller && order.status === "pending_payment";
+  const canCancel = (isSeller || isBuyer) && order.status === "pending_payment";
   const canComplete = isSeller && ["paid_held", "in_progress", "release_requested"].includes(order.status);
   const canAccept = isBuyer && order.status === "release_requested";
 

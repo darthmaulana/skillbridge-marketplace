@@ -55,23 +55,35 @@ export async function POST(request: Request) {
 
   const { data: post, error: postError } = await supabase
     .from("posts")
-    .select("id,user_id,title,work_type")
+    .select("id,user_id,title,post_type,work_type")
     .eq("id", chat.post_id)
     .maybeSingle();
 
   if (postError) return corsJson({ error: postError.message }, { status: 500 });
   if (!post) return corsJson({ error: "Post not found." }, { status: 404 });
-  if (post.user_id !== userData.user.id) return corsJson({ error: "Only the post owner can create a bill." }, { status: 403 });
 
-  const buyerId = chat.participant_one_id === userData.user.id ? chat.participant_two_id : chat.participant_one_id;
+  const postOwnerId = post.user_id;
+  const isSkillPost = post.post_type === "skill";
+  const nonOwnerParticipantId = chat.participant_one_id === postOwnerId ? chat.participant_two_id : chat.participant_one_id;
+  const expectedSellerId = isSkillPost ? postOwnerId : nonOwnerParticipantId;
+  const expectedBuyerId = isSkillPost ? nonOwnerParticipantId : postOwnerId;
+
+  if (userData.user.id !== expectedSellerId) {
+    return corsJson({
+      error: isSkillPost
+        ? "Only the skill owner can create a bill for this skill post."
+        : "Only the worker can create a bill for this job post.",
+    }, { status: 403 });
+  }
+
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("id,full_name,email,verification_status,offline_job_access,is_banned")
-    .in("id", [buyerId, userData.user.id]);
+    .in("id", [expectedBuyerId, expectedSellerId]);
 
   if (profileError) return corsJson({ error: profileError.message }, { status: 500 });
-  const buyer = profiles?.find((profile) => profile.id === buyerId);
-  const seller = profiles?.find((profile) => profile.id === userData.user.id);
+  const buyer = profiles?.find((profile) => profile.id === expectedBuyerId);
+  const seller = profiles?.find((profile) => profile.id === expectedSellerId);
 
   if (!buyer || !seller) return corsJson({ error: "Buyer or seller profile is missing." }, { status: 400 });
   if (buyer.is_banned || seller.is_banned) return corsJson({ error: "Payments are unavailable for restricted accounts." }, { status: 403 });
@@ -92,8 +104,8 @@ export async function POST(request: Request) {
     id: orderId,
     post_id: post.id,
     chat_id: chat.id,
-    buyer_id: buyerId,
-    seller_id: userData.user.id,
+    buyer_id: expectedBuyerId,
+    seller_id: expectedSellerId,
     amount,
     platform_fee: platformFee,
     total_amount: totalAmount,
