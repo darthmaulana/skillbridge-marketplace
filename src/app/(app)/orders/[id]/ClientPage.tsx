@@ -12,8 +12,8 @@ interface OrderRow {
   total_amount: number;
   currency: string;
   status: string;
+  bill_title: string | null;
   created_at: string;
-  posts?: { title?: string | null } | null;
   payments?: Array<{ status: string; checkout_url: string | null; paid_at: string | null }> | null;
 }
 
@@ -37,7 +37,7 @@ export default function ClientPage() {
       setError(null);
       const { data, error: orderError } = await supabase
         .from("orders")
-        .select("id,amount,platform_fee,total_amount,currency,status,created_at,posts(title),payments(status,checkout_url,paid_at)")
+        .select("id,amount,platform_fee,total_amount,currency,status,bill_title,created_at,payments(status,checkout_url,paid_at)")
         .eq("id", params.id)
         .maybeSingle();
 
@@ -87,7 +87,7 @@ export default function ClientPage() {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Order</p>
-                  <h2 className="font-bold">{order.posts?.title || "SkillBridge order"}</h2>
+                  <h2 className="font-bold">{order.bill_title || "SkillBridge order"}</h2>
                 </div>
               </div>
               <StatusPill status={order.status} />

@@ -28,7 +28,9 @@ export async function POST(request: Request) {
   if (!token) return corsJson({ error: "Sign in before creating a bill." }, { status: 401 });
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
-  if (userError || !userData.user) return corsJson({ error: "Your session is not valid." }, { status: 401 });
+  if (userError || !userData.user) {
+    return corsJson({ error: "Your session is not valid. Please sign out, sign in again, and make sure Vercel uses the same Supabase project keys as the app." }, { status: 401 });
+  }
 
   const body = await request.json().catch(() => ({})) as CreateBillBody;
   const amount = Math.round(Number(body.amount));

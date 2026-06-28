@@ -1,9 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppViewport } from "./AppViewport";
 import { BottomNav } from "@/app/components/shared/BottomNav";
+import { useAppState } from "@/components/providers/AppStateProvider";
+import { loadChats } from "@/lib/chat";
+import { CHAT_READ_EVENT } from "@/lib/chatRead";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 const navRoutes = ["/home", "/search", "/chat", "/profile"];
 const routeTitles: Record<string, string> = {
@@ -16,8 +20,39 @@ const routeTitles: Record<string, string> = {
 
 export function MobileAppShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
   const pathname = usePathname();
+  const { posts, profile } = useAppState();
+  const [unreadChats, setUnreadChats] = useState(0);
   const showBottomNav = !admin && navRoutes.includes(pathname);
   const title = admin ? "/admin - skillbridge" : routeTitles[pathname] ?? "/skillbridge";
+
+  useEffect(() => {
+    if (!profile || admin) {
+      setUnreadChats(0);
+      return;
+    }
+
+    let active = true;
+    const refreshUnread = () => {
+      void loadChats(profile, posts).then((result) => {
+        if (!active || result.error) return;
+        setUnreadChats(result.data?.filter((chat) => chat.unread).length ?? 0);
+      });
+    };
+
+    refreshUnread();
+    window.addEventListener(CHAT_READ_EVENT, refreshUnread);
+    const supabase = getSupabaseBrowserClient();
+    const channel = supabase
+      ?.channel("mobile-shell-unread-messages")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, refreshUnread)
+      .subscribe();
+
+    return () => {
+      active = false;
+      window.removeEventListener(CHAT_READ_EVENT, refreshUnread);
+      if (supabase && channel) void supabase.removeChannel(channel);
+    };
+  }, [admin, pathname, posts, profile]);
 
   return (
     <AppViewport>
@@ -36,7 +71,7 @@ export function MobileAppShell({ children, admin = false }: { children: ReactNod
         <div className="absolute inset-x-0 bottom-0 top-0 flex flex-col lg:top-8" style={{ overscrollBehavior: "contain" }}>
           {children}
         </div>
-        {showBottomNav && <BottomNav unreadChats={0} />}
+        {showBottomNav && <BottomNav unreadChats={unreadChats} />}
       </section>
     </AppViewport>
   );

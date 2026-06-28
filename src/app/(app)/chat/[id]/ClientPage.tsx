@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ChatDetailScreen } from "@/app/components/ChatDetailScreen";
 import { useAppState } from "@/components/providers/AppStateProvider";
 import { loadChatThread, sendChatMessage, subscribeToChatMessages, type ChatThread } from "@/lib/chat";
-import { acceptOrderCompletion, createBillCheckout, loadChatOrders, submitOrderCompletion, type ChatOrder } from "@/lib/paymentClient";
+import { markChatRead } from "@/lib/chatRead";
+import { acceptOrderCompletion, cancelOrderBill, createBillCheckout, loadChatOrders, submitOrderCompletion, type ChatOrder } from "@/lib/paymentClient";
 
 export default function ClientPage() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function ClientPage() {
         return;
       }
       setThread(result.data ?? null);
+      markChatRead(params.id);
     });
     const unsubscribe = subscribeToChatMessages(params.id, profile.id, (message) => {
       if (!active) return;
@@ -35,6 +37,7 @@ export default function ClientPage() {
         ...current,
         messages: current.messages.some((item) => item.id === message.id) ? current.messages : [...current.messages, message],
       } : current);
+      if (!message.mine) markChatRead(params.id);
     });
     return () => {
       active = false;
@@ -73,6 +76,9 @@ export default function ClientPage() {
       currentUserId={profile.id}
       orders={orders}
       onBack={() => router.push("/chat")}
+      onOpenPost={() => {
+        if (thread.chat.postId) router.push(`/posts/${thread.chat.postId}`);
+      }}
       onSend={(message) => sendChatMessage(params.id, message, profile)}
       onCreateBill={async (input) => {
         const result = await createBillCheckout({ chatId: params.id, ...input });
@@ -86,6 +92,11 @@ export default function ClientPage() {
       }}
       onAcceptCompletion={async (orderId) => {
         const result = await acceptOrderCompletion(orderId);
+        await refreshOrders();
+        return result.error;
+      }}
+      onCancelBill={async (orderId) => {
+        const result = await cancelOrderBill(orderId);
         await refreshOrders();
         return result.error;
       }}

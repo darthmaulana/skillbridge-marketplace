@@ -16,7 +16,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : "";
-  if (!token) return corsJson({ error: "Sign in before accepting work." }, { status: 401 });
+  if (!token) return corsJson({ error: "Sign in before cancelling a bill." }, { status: 401 });
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
   if (userError || !userData.user) {
@@ -26,38 +26,41 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .select("id,buyer_id,seller_id,amount,status,chat_id")
+    .select("id,seller_id,status,chat_id,payments(status)")
     .eq("id", id)
     .maybeSingle();
 
   if (orderError) return corsJson({ error: orderError.message }, { status: 500 });
-  if (!order) return corsJson({ error: "Order not found." }, { status: 404 });
-  if (order.buyer_id !== userData.user.id) return corsJson({ error: "Only the buyer can accept completed work." }, { status: 403 });
-  if (order.status !== "release_requested") {
-    return corsJson({ error: "The seller must submit completion before you can accept." }, { status: 400 });
+  if (!order) return corsJson({ error: "Bill not found." }, { status: 404 });
+  if (order.seller_id !== userData.user.id) return corsJson({ error: "Only the post owner can cancel this bill." }, { status: 403 });
+  if (order.status !== "pending_payment") {
+    return corsJson({ error: "Only unpaid bills can be cancelled. Paid orders need refund/dispute handling." }, { status: 400 });
+  }
+
+  const hasPaidPayment = Array.isArray(order.payments) && order.payments.some((payment) => payment.status === "paid");
+  if (hasPaidPayment) {
+    return corsJson({ error: "This bill has already been paid and cannot be cancelled here." }, { status: 400 });
   }
 
   const now = new Date().toISOString();
   const { error: updateError } = await supabase
     .from("orders")
-    .update({ status: "released", accepted_at: now, updated_at: now })
+    .update({ status: "cancelled", updated_at: now })
     .eq("id", id);
 
   if (updateError) return corsJson({ error: updateError.message }, { status: 500 });
 
-  await supabase.from("escrow_releases").insert({
-    order_id: id,
-    amount: order.amount,
-    status: "released",
-    notes: "Buyer accepted completion. Manual payout can be processed by admin.",
-    released_at: now,
-  });
+  await supabase
+    .from("payments")
+    .update({ status: "cancelled", updated_at: now })
+    .eq("order_id", id)
+    .eq("status", "pending");
 
   if (order.chat_id) {
     await supabase.from("messages").insert({
       chat_id: order.chat_id,
       sender_id: userData.user.id,
-      message: `Work accepted for order ${id.slice(0, 8)}. The order is now marked released in SkillBridge.`,
+      message: `Bill ${id.slice(0, 8)} was cancelled by the post owner.`,
     });
   }
 

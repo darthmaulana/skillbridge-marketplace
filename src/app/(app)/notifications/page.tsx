@@ -1,18 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NotificationsScreen, type NotificationItem } from "@/app/components/NotificationsScreen";
 import { useAppState } from "@/components/providers/AppStateProvider";
+import { loadChats, type ChatSummary } from "@/lib/chat";
+import { markChatsRead } from "@/lib/chatRead";
 import { env } from "@/lib/env";
 
 export default function NotificationsPage() {
   const router = useRouter();
   const { posts, profile, role, verificationStatus } = useAppState();
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+
+  useEffect(() => {
+    if (!profile) return;
+    let active = true;
+    loadChats(profile, posts).then((result) => {
+      if (!active || result.error) return;
+      setChats(result.data ?? []);
+    });
+    return () => {
+      active = false;
+    };
+  }, [posts, profile]);
 
   const notifications = useMemo<NotificationItem[]>(() => {
     const latestPost = posts.find((post) => !post.owner);
+    const unreadChats = chats.filter((chat) => chat.unread);
     const isAllowedAdmin = Boolean(
       profile?.email &&
         role === "admin" &&
@@ -20,6 +36,19 @@ export default function NotificationsPage() {
         env.adminEmails.includes(profile.email.toLowerCase()),
     );
     const items: NotificationItem[] = [];
+
+    for (const chat of unreadChats.slice(0, 3)) {
+      items.push({
+        id: `chat-${chat.id}`,
+        type: "message",
+        title: `New message from ${chat.otherName}`,
+        description: chat.lastMessage,
+        time: formatNotificationTime(chat.lastMessageAt),
+        unread: true,
+        actionLabel: "Open",
+        onAction: () => router.push(`/chat/${chat.id}`),
+      });
+    }
 
     if (verificationStatus === "pending") {
       items.push({
@@ -125,13 +154,26 @@ export default function NotificationsPage() {
     }
 
     return items.map((item) => ({ ...item, unread: item.unread && !readIds.has(item.id) }));
-  }, [posts, profile, readIds, role, router, verificationStatus]);
+  }, [chats, posts, profile, readIds, role, router, verificationStatus]);
 
   return (
     <NotificationsScreen
       notifications={notifications}
       onBack={() => router.push("/home")}
-      onMarkAllRead={() => setReadIds(new Set(notifications.map((item) => item.id)))}
+      onMarkAllRead={() => {
+        setReadIds(new Set(notifications.map((item) => item.id)));
+        markChatsRead(chats.filter((chat) => chat.unread).map((chat) => chat.id));
+        setChats((current) => current.map((chat) => ({ ...chat, unread: false })));
+      }}
     />
   );
+}
+
+function formatNotificationTime(value: string) {
+  const date = new Date(value);
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) {
+    return new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit" }).format(date);
+  }
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
 }

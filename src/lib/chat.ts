@@ -1,6 +1,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { Post } from "@/app/components/shared/PostCard";
 import { DEMO_PUBLIC_PROFILES, type PublicProfile, type UserProfile } from "@/lib/auth";
+import { getChatReadAt } from "@/lib/chatRead";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { getDemoBlockedUserIds } from "@/lib/safety";
 
@@ -16,6 +17,8 @@ export interface ChatSummary {
   otherVerified: boolean;
   lastMessage: string;
   lastMessageAt: string;
+  lastMessageSenderId: string | null;
+  unread: boolean;
 }
 
 export interface ChatMessage {
@@ -246,6 +249,12 @@ function mapChatRows(
     const post = chat.post_id ? postById.get(chat.post_id) : undefined;
     const lastMessage = lastMessageByChat.get(chat.id);
     const otherName = otherProfile?.full_name || post?.userName || "SkillBridge user";
+    const readAt = getChatReadAt(chat.id);
+    const unread = Boolean(
+      lastMessage
+      && lastMessage.sender_id !== profile.id
+      && (!readAt || new Date(lastMessage.created_at).getTime() > new Date(readAt).getTime()),
+    );
 
     return {
       id: chat.id,
@@ -259,6 +268,8 @@ function mapChatRows(
       otherVerified: otherProfile?.verification_status === "approved" || Boolean(post?.verified),
       lastMessage: lastMessage?.message || "No messages yet. Say hello!",
       lastMessageAt: lastMessage?.created_at || chat.created_at,
+      lastMessageSenderId: lastMessage?.sender_id ?? null,
+      unread,
     };
   }).sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
 }

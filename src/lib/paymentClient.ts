@@ -27,11 +27,7 @@ export interface ChatOrder {
 }
 
 export async function createPaymentCheckout(postId: string): Promise<CheckoutResult> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return { error: "Payments require Supabase mode." };
-
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const token = await getAccessToken();
   if (!token) return { error: "Sign in before paying." };
 
   const response = await fetch(apiUrl("/api/payments/create"), {
@@ -109,11 +105,34 @@ export async function acceptOrderCompletion(orderId: string) {
   return response.ok ? {} : { error: payload.error || "Could not accept work." };
 }
 
+export async function cancelOrderBill(orderId: string) {
+  const token = await getAccessToken();
+  if (!token) return { error: "Sign in before cancelling a bill." };
+
+  const response = await fetch(apiUrl(`/api/orders/${orderId}/cancel`), {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const payload = await response.json().catch(() => ({})) as { error?: string };
+  return response.ok ? {} : { error: payload.error || "Could not cancel bill." };
+}
+
 async function getAccessToken() {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
+
   const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
+  const session = data.session;
+  if (!session) return null;
+
+  const expiresAtMs = (session.expires_at ?? 0) * 1000;
+  const shouldRefresh = !expiresAtMs || expiresAtMs - Date.now() < 120_000;
+  if (!shouldRefresh) return session.access_token;
+
+  const { data: refreshed, error } = await supabase.auth.refreshSession();
+  if (error || !refreshed.session) return session.access_token;
+  return refreshed.session.access_token;
 }
 
 function apiUrl(path: string) {

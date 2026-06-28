@@ -80,11 +80,14 @@ export function ChatListScreen({ chats, loading, error, onChat, onRetry }: Props
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-0.5 flex items-center justify-between">
-                <span className="truncate font-semibold text-foreground">{chat.otherName}</span>
-                <span className="ml-2 flex-shrink-0 text-xs text-muted-foreground">{formatChatTime(chat.lastMessageAt)}</span>
+                <span className={`truncate ${chat.unread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>{chat.otherName}</span>
+                <span className={`ml-2 flex-shrink-0 text-xs ${chat.unread ? "font-bold text-primary" : "text-muted-foreground"}`}>{formatChatTime(chat.lastMessageAt)}</span>
               </div>
               <p className="mb-0.5 truncate text-xs font-medium text-primary">{chat.postTitle}</p>
-              <p className="truncate text-sm text-muted-foreground">{chat.lastMessage}</p>
+              <div className="flex items-center gap-2">
+                <p className={`truncate text-sm ${chat.unread ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{chat.lastMessage}</p>
+                {chat.unread && <span className="h-2 w-2 flex-shrink-0 rounded-full bg-primary" />}
+              </div>
             </div>
           </button>
         ))}

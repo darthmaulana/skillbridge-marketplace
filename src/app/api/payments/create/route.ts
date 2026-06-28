@@ -25,7 +25,9 @@ export async function POST(request: Request) {
   if (!token) return corsJson({ error: "Sign in before paying." }, { status: 401 });
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
-  if (userError || !userData.user) return corsJson({ error: "Your session is not valid." }, { status: 401 });
+  if (userError || !userData.user) {
+    return corsJson({ error: "Your session is not valid. Please sign out, sign in again, and make sure Vercel uses the same Supabase project keys as the app." }, { status: 401 });
+  }
 
   const body = await request.json().catch(() => ({})) as CreatePaymentBody;
   if (!body.postId) return corsJson({ error: "Post id is required." }, { status: 400 });

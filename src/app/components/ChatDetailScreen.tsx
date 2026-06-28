@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, AlertTriangle, CheckCircle, ChevronLeft, CreditCard, Link2, Plus, Send, Shield, Wifi, Users } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle, ChevronLeft, CreditCard, Link2, Plus, Send, Shield, Trash2, Wifi, Users } from "lucide-react";
 import type { ChatMessage, ChatThread } from "@/lib/chat";
 import type { ChatOrder } from "@/lib/paymentClient";
 
@@ -8,13 +8,15 @@ interface Props {
   currentUserId: string;
   orders: ChatOrder[];
   onBack: () => void;
+  onOpenPost: () => void;
   onSend: (message: string) => Promise<{ data?: ChatMessage; error?: string }>;
   onCreateBill: (input: { amount: number; title: string; note?: string }) => Promise<string | void>;
   onSubmitCompletion: (orderId: string, input: { completionUrl?: string; completionNote?: string }) => Promise<string | void>;
   onAcceptCompletion: (orderId: string) => Promise<string | void>;
+  onCancelBill: (orderId: string) => Promise<string | void>;
 }
 
-export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onSend, onCreateBill, onSubmitCompletion, onAcceptCompletion }: Props) {
+export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onOpenPost, onSend, onCreateBill, onSubmitCompletion, onAcceptCompletion, onCancelBill }: Props) {
   const [messages, setMessages] = useState(thread.messages);
   const [input, setInput] = useState("");
   const [billOpen, setBillOpen] = useState(false);
@@ -88,6 +90,14 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onSend
     if (result) setError(result);
   };
 
+  const cancelBill = async (orderId: string) => {
+    setWorking(true);
+    setError(null);
+    const result = await onCancelBill(orderId);
+    setWorking(false);
+    if (result) setError(result);
+  };
+
   return (
     <div className="flex h-full flex-col bg-background">
       <header className="flex items-center gap-3 border-b border-border bg-card px-4 pb-3 pt-12">
@@ -112,7 +122,11 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onSend
         </div>
       </header>
 
-      <section className="mx-4 mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+      <button
+        onClick={onOpenPost}
+        disabled={!thread.chat.postId}
+        className="mx-4 mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left disabled:cursor-default"
+      >
         <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${thread.chat.postMode === "offline" ? "bg-orange-100 text-orange-600" : "bg-sky-100 text-sky-600"}`}>
           {thread.chat.postMode === "offline" ? <Users size={19} /> : <Wifi size={19} />}
         </div>
@@ -121,7 +135,8 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onSend
           <p className="truncate text-sm font-semibold text-foreground">{thread.chat.postTitle}</p>
         </div>
         {thread.chat.postMode && <span className="rounded-full bg-muted px-2 py-1 text-xs capitalize text-muted-foreground">{thread.chat.postMode}</span>}
-      </section>
+        {thread.chat.postId && <ChevronLeft size={18} className="rotate-180 text-muted-foreground" />}
+      </button>
 
       {thread.chat.postMode === "offline" && (
         <div className="mx-4 mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
@@ -175,6 +190,7 @@ export function ChatDetailScreen({ thread, currentUserId, orders, onBack, onSend
                   onCompletionChange={(completion) => setCompletionByOrder((current) => ({ ...current, [order.id]: completion }))}
                   onSubmitCompletion={() => void submitCompletion(order.id)}
                   onAccept={() => void acceptCompletion(order.id)}
+                  onCancel={() => void cancelBill(order.id)}
                 />
               ))}
             </div>
@@ -238,6 +254,7 @@ function OrderCard({
   onCompletionChange,
   onSubmitCompletion,
   onAccept,
+  onCancel,
 }: {
   order: ChatOrder;
   currentUserId: string;
@@ -246,11 +263,13 @@ function OrderCard({
   onCompletionChange: (completion: { url: string; note: string }) => void;
   onSubmitCompletion: () => void;
   onAccept: () => void;
+  onCancel: () => void;
 }) {
   const payment = order.payments?.[0];
   const isBuyer = order.buyer_id === currentUserId;
   const isSeller = order.seller_id === currentUserId;
   const canPay = isBuyer && order.status === "pending_payment" && payment?.checkout_url;
+  const canCancel = isSeller && order.status === "pending_payment";
   const canComplete = isSeller && ["paid_held", "in_progress", "release_requested"].includes(order.status);
   const canAccept = isBuyer && order.status === "release_requested";
 
@@ -272,6 +291,12 @@ function OrderCard({
         <a href={payment.checkout_url!} className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-bold text-primary-foreground">
           <CreditCard size={15} /> Pay Bill Safely
         </a>
+      )}
+
+      {canCancel && (
+        <button onClick={onCancel} disabled={working} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-60">
+          <Trash2 size={15} /> Cancel Bill
+        </button>
       )}
 
       {canComplete && (
