@@ -12,6 +12,11 @@ export interface UserProfile {
   ban_reason: string | null;
   verification_status: "unverified" | "pending" | "approved" | "rejected";
   offline_job_access: boolean;
+  payout_method: string | null;
+  payout_provider: string | null;
+  payout_account_name: string | null;
+  payout_account_number: string | null;
+  payout_notes: string | null;
   created_at: string;
 }
 
@@ -33,6 +38,11 @@ export interface UpdateProfileInput {
   skills: string[];
   portfolioUrl: string;
   location: string;
+  payoutMethod: string;
+  payoutProvider: string;
+  payoutAccountName: string;
+  payoutAccountNumber: string;
+  payoutNotes: string;
   avatar?: File;
 }
 
@@ -61,6 +71,11 @@ export const DEMO_PROFILE: UserProfile = {
   ban_reason: null,
   verification_status: "unverified",
   offline_job_access: false,
+  payout_method: "bank",
+  payout_provider: "BCA",
+  payout_account_name: "Ayu Setiawati",
+  payout_account_number: "1234567890",
+  payout_notes: null,
   created_at: "2026-01-15T08:00:00Z",
 };
 

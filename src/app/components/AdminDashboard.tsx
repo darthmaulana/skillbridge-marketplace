@@ -1,4 +1,4 @@
-import { AlertCircle, ChevronLeft, ChevronRight, FileText, Flag, Shield, Users } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, FileText, Flag, Shield, Users, Wallet } from "lucide-react";
 import type { AdminStats } from "@/lib/admin";
 
 interface Props {
@@ -11,16 +11,19 @@ interface Props {
   onPosts: () => void;
   onReports: () => void;
   onVerifications: () => void;
+  onPayouts: () => void;
 }
 
-export function AdminDashboard({ stats, loading, error, onBack, onRetry, onUsers, onPosts, onReports, onVerifications }: Props) {
+export function AdminDashboard({ stats, loading, error, onBack, onRetry, onUsers, onPosts, onReports, onVerifications, onPayouts }: Props) {
   const cards = [
     { label: "Total Users", value: stats?.users ?? 0, icon: Users, color: "bg-blue-100 text-primary" },
     { label: "Active Posts", value: stats?.activePosts ?? 0, icon: FileText, color: "bg-emerald-100 text-emerald-600" },
     { label: "Open Reports", value: stats?.openReports ?? 0, icon: Flag, color: "bg-red-100 text-destructive" },
     { label: "Pending KTP", value: stats?.pendingVerifications ?? 0, icon: Shield, color: "bg-amber-100 text-amber-600" },
+    { label: "Payout Review", value: stats?.pendingPayouts ?? 0, icon: Wallet, color: "bg-purple-100 text-purple-700" },
   ];
   const actions = [
+    { label: "Review Payouts", count: stats?.pendingPayouts ?? 0, onClick: onPayouts },
     { label: "Review KTP Verifications", count: stats?.pendingVerifications ?? 0, onClick: onVerifications },
     { label: "Manage Reports", count: stats?.openReports ?? 0, onClick: onReports },
     { label: "Manage Posts", count: stats?.activePosts ?? 0, onClick: onPosts },

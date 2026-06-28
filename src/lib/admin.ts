@@ -42,6 +42,7 @@ export interface AdminStats {
   activePosts: number;
   openReports: number;
   pendingVerifications: number;
+  pendingPayouts: number;
 }
 
 export interface AdminResult<T> {
@@ -235,6 +236,7 @@ export async function loadAdminStats(): Promise<AdminResult<AdminStats>> {
   if (users.error || posts.error || reports.error) return { error: users.error || posts.error || reports.error };
   const supabase = getSupabaseBrowserClient();
   let pendingVerifications = 0;
+  let pendingPayouts = 0;
   if (!supabase) {
     const saved = loadJson<Array<{ status: VerificationStatus }>>("skillbridge-admin-verifications", []);
     pendingVerifications = saved.filter((request) => request.status === "pending").length || 2;
@@ -242,6 +244,12 @@ export async function loadAdminStats(): Promise<AdminResult<AdminStats>> {
     const { count, error } = await supabase.from("verification_requests").select("id", { count: "exact", head: true }).eq("status", "pending");
     if (error) return { error: error.message };
     pendingVerifications = count ?? 0;
+
+    const { count: releasedCount, error: payoutError } = await supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "released");
+    if (!payoutError) pendingPayouts = releasedCount ?? 0;
   }
   return {
     data: {
@@ -249,6 +257,7 @@ export async function loadAdminStats(): Promise<AdminResult<AdminStats>> {
       activePosts: posts.data?.length ?? 0,
       openReports: reports.data?.filter((report) => report.status === "open" || report.status === "reviewing").length ?? 0,
       pendingVerifications,
+      pendingPayouts,
     },
   };
 }

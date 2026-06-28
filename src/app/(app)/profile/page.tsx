@@ -28,6 +28,7 @@ export default function ProfilePage() {
   return (
     <ProfileScreen
       profile={publicProfile}
+      privateProfile={profile}
       posts={posts}
       isOwnProfile
       onEdit={() => router.push("/profile/edit")}

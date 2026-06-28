@@ -281,6 +281,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     if (input.portfolioUrl && !/^https?:\/\//i.test(input.portfolioUrl)) {
       return { error: "Portfolio link must start with http:// or https://." };
     }
+    const hasAnyPayoutInfo = Boolean(
+      input.payoutMethod.trim()
+      || input.payoutProvider.trim()
+      || input.payoutAccountName.trim()
+      || input.payoutAccountNumber.trim()
+      || input.payoutNotes.trim(),
+    );
+    const hasRequiredPayoutInfo = Boolean(
+      input.payoutMethod.trim()
+      && input.payoutProvider.trim()
+      && input.payoutAccountName.trim()
+      && input.payoutAccountNumber.trim(),
+    );
+    if (hasAnyPayoutInfo && !hasRequiredPayoutInfo) {
+      return { error: "Complete payout method, provider, account name, and account number before saving payout details." };
+    }
     if (input.avatar && input.avatar.size > 3 * 1024 * 1024) {
       return { error: "Profile photo must be smaller than 3 MB." };
     }
@@ -296,6 +312,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         skills: input.skills,
         portfolio_url: input.portfolioUrl.trim() || null,
         location: input.location.trim() || null,
+        payout_method: input.payoutMethod.trim() || null,
+        payout_provider: input.payoutProvider.trim() || null,
+        payout_account_name: input.payoutAccountName.trim() || null,
+        payout_account_number: input.payoutAccountNumber.trim() || null,
+        payout_notes: input.payoutNotes.trim() || null,
       };
       setProfile(updatedProfile);
       setPosts((current) => current.map((post) => post.userId === profile.id ? {
@@ -327,6 +348,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       skills: input.skills,
       portfolio_url: input.portfolioUrl.trim() || null,
       location: input.location.trim() || null,
+      payout_method: input.payoutMethod.trim() || null,
+      payout_provider: input.payoutProvider.trim() || null,
+      payout_account_name: input.payoutAccountName.trim() || null,
+      payout_account_number: input.payoutAccountNumber.trim() || null,
+      payout_notes: input.payoutNotes.trim() || null,
     };
     const { data, error } = await supabase.from("profiles").update(updates).eq("id", user.id).select("*").single();
     if (error) return { error: error.message };

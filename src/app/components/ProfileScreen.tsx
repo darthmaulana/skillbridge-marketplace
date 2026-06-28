@@ -1,9 +1,10 @@
 import { ChevronLeft, ChevronRight, Edit2, ExternalLink, FileText, Flag, Info, Link2, LogOut, MapPin, Shield } from "lucide-react";
-import type { PublicProfile } from "@/lib/auth";
+import type { PublicProfile, UserProfile } from "@/lib/auth";
 import { PostCard, type Post } from "./shared/PostCard";
 
 interface Props {
   profile: PublicProfile;
+  privateProfile?: UserProfile;
   posts: Post[];
   isOwnProfile?: boolean;
   onBack?: () => void;
@@ -32,6 +33,7 @@ const statusLabels = {
 
 export function ProfileScreen({
   profile,
+  privateProfile,
   posts,
   isOwnProfile = false,
   onBack,
@@ -118,6 +120,32 @@ export function ProfileScreen({
         </div>
       </section>
 
+      {isOwnProfile && privateProfile && (
+        <section className="mx-4 mt-3 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-foreground">Money details</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Private payout account for accepted work.</p>
+            </div>
+            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${hasPayoutDetails(privateProfile) ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+              {hasPayoutDetails(privateProfile) ? "Ready" : "Missing"}
+            </span>
+          </div>
+          {hasPayoutDetails(privateProfile) ? (
+            <div className="mt-3 space-y-1 text-sm">
+              <p><span className="text-muted-foreground">Method:</span> <span className="font-semibold capitalize">{privateProfile.payout_method}</span></p>
+              <p><span className="text-muted-foreground">Provider:</span> <span className="font-semibold">{privateProfile.payout_provider}</span></p>
+              <p><span className="text-muted-foreground">Name:</span> <span className="font-semibold">{privateProfile.payout_account_name}</span></p>
+              <p><span className="text-muted-foreground">Number:</span> <span className="font-semibold">{maskAccount(privateProfile.payout_account_number)}</span></p>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Add your bank or e-wallet account in Edit Profile so admin can pay you after work is accepted.
+            </p>
+          )}
+        </section>
+      )}
+
       {isOwnProfile && profile.verification_status !== "approved" && (
         <div className="mx-4 mt-3">
           <button onClick={onVerify} className="flex w-full items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
@@ -174,4 +202,14 @@ export function ProfileScreen({
       )}
     </div>
   );
+}
+
+function hasPayoutDetails(profile: UserProfile) {
+  return Boolean(profile.payout_method && profile.payout_provider && profile.payout_account_name && profile.payout_account_number);
+}
+
+function maskAccount(value: string | null) {
+  if (!value) return "-";
+  if (value.length <= 4) return value;
+  return `${"*".repeat(Math.max(0, value.length - 4))}${value.slice(-4)}`;
 }

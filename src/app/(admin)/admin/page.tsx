@@ -28,5 +28,6 @@ export default function AdminPage() {
     onUsers={() => router.push("/admin/users")}
     onPosts={() => router.push("/admin/posts")}
     onReports={() => router.push("/admin/reports")}
+    onPayouts={() => router.push("/admin/payouts")}
   />;
 }

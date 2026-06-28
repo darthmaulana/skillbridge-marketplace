@@ -53,6 +53,14 @@ The Android build still uses static export internally, but the Vercel web app ne
 
 7. Deploy.
 
+Before testing payouts, run this Supabase SQL file in the SQL Editor:
+
+```text
+supabase/profile-payout-details.sql
+```
+
+This adds private payout account fields to user profiles so admins know where to send manual payouts.
+
 Vercel will give a public URL like:
 
 ```text
