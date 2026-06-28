@@ -15,6 +15,7 @@ const routeTitles: Record<string, string> = {
   "/search": "/search - skillbridge",
   "/chat": "/messages - skillbridge",
   "/profile": "/me - skillbridge",
+  "/profile/payout": "/payout-account - skillbridge",
   "/create": "/create-post - skillbridge",
   "/terms": "/terms - skillbridge",
   "/about": "/about - skillbridge",

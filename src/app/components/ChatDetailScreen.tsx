@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, AlertTriangle, CheckCircle, ChevronLeft, CreditCard, Link2, Plus, Send, Shield, Trash2, Wifi, Users } from "lucide-react";
 import type { ChatMessage, ChatThread } from "@/lib/chat";
 import type { ChatOrder } from "@/lib/paymentClient";
+import { toExternalUrl } from "@/lib/url";
 
 interface Props {
   thread: ChatThread;
@@ -281,6 +282,7 @@ function OrderCard({
   const canCancel = (isSeller || isBuyer) && order.status === "pending_payment";
   const canComplete = isSeller && ["paid_held", "in_progress", "release_requested"].includes(order.status);
   const canAccept = isBuyer && order.status === "release_requested";
+  const completionHref = toExternalUrl(order.completion_url);
 
   return (
     <div className="rounded-xl border border-border bg-background p-3">
@@ -310,7 +312,7 @@ function OrderCard({
 
       {canComplete && (
         <div className="mt-3 space-y-2">
-          <input value={completion.url} onChange={(event) => onCompletionChange({ ...completion, url: event.target.value })} placeholder="Completion link, e.g. Drive/Figma/GitHub" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs outline-none" />
+          <input value={completion.url} onChange={(event) => onCompletionChange({ ...completion, url: event.target.value })} placeholder="Completion link, e.g. https://drive.google.com/..." className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs outline-none" />
           <textarea value={completion.note} onChange={(event) => onCompletionChange({ ...completion, note: event.target.value })} placeholder="Completion note" className="min-h-16 w-full rounded-xl border border-border bg-card px-3 py-2 text-xs outline-none" />
           <button onClick={onSubmitCompletion} disabled={working} className="w-full rounded-xl border border-foreground bg-[#f3c969] px-3 py-2 text-sm font-bold disabled:opacity-60">
             Submit Completion
@@ -321,7 +323,8 @@ function OrderCard({
       {(order.completion_url || order.completion_note) && (
         <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
           <p className="mb-1 flex items-center gap-1 font-bold"><CheckCircle size={13} /> Completion submitted</p>
-          {order.completion_url && <a href={order.completion_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 underline"><Link2 size={12} />Open completion link</a>}
+          {completionHref && <a href={completionHref} target="_blank" rel="noreferrer" className="flex items-center gap-1 underline"><Link2 size={12} />Open completion link</a>}
+          {order.completion_url && !completionHref && <p className="mt-1 whitespace-pre-wrap">Proof: {order.completion_url}</p>}
           {order.completion_note && <p className="mt-1 whitespace-pre-wrap">{order.completion_note}</p>}
         </div>
       )}

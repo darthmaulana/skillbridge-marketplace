@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { CheckCircle2, ExternalLink, Wallet } from "lucide-react";
 import type { AdminPayout } from "@/lib/adminPayouts";
+import { toExternalUrl } from "@/lib/url";
 import { AdminPage, AsyncState, SearchBox } from "./AdminUsersScreen";
 
 interface Props {
@@ -49,6 +50,7 @@ export function AdminPayoutsScreen({ payouts, loading, error, onBack, onRetry, o
           {filtered.map((payout) => {
             const needsPayout = payout.status === "released" && payout.payoutStatus !== "paid";
             const hasPayoutDetails = Boolean(payout.sellerPayoutMethod && payout.sellerPayoutProvider && payout.sellerPayoutAccountName && payout.sellerPayoutAccountNumber);
+            const completionHref = toExternalUrl(payout.completionUrl);
             return (
               <article key={payout.id} className="rounded-2xl border border-border bg-card p-4">
                 <div className="flex items-start gap-3">
@@ -81,11 +83,12 @@ export function AdminPayoutsScreen({ payouts, loading, error, onBack, onRetry, o
                       <AmountBox label="Payout to seller" value={payout.amount} strong />
                       <AmountBox label="Platform fee" value={payout.platformFee} />
                     </div>
-                    {payout.completionUrl && (
-                      <a href={payout.completionUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    {completionHref && (
+                      <a href={completionHref} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
                         View completion proof <ExternalLink size={12} />
                       </a>
                     )}
+                    {payout.completionUrl && !completionHref && <p className="mt-2 rounded-xl bg-muted p-2 text-xs text-muted-foreground">Completion proof: {payout.completionUrl}</p>}
                     {payout.completionNote && <p className="mt-2 rounded-xl bg-muted p-2 text-xs text-muted-foreground">{payout.completionNote}</p>}
                     {payout.acceptedAt && <p className="mt-2 text-xs text-muted-foreground">Accepted {formatDateTime(payout.acceptedAt)}</p>}
                     {payout.payoutNotes && <p className="mt-2 text-xs text-muted-foreground">Payout note: {payout.payoutNotes}</p>}

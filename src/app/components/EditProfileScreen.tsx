@@ -1,5 +1,5 @@
 ﻿import { useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertCircle, Camera, ChevronLeft, CreditCard, Link2, MapPin, Save, UserRound, X } from "lucide-react";
+import { AlertCircle, Camera, ChevronLeft, Link2, MapPin, Save, UserRound, X } from "lucide-react";
 import type { ProfileResult, UpdateProfileInput, UserProfile } from "@/lib/auth";
 
 interface Props {
@@ -15,11 +15,6 @@ export function EditProfileScreen({ profile, onBack, onSubmit }: Props) {
   const [skills, setSkills] = useState(profile.skills.join(", "));
   const [portfolioUrl, setPortfolioUrl] = useState(profile.portfolio_url ?? "");
   const [location, setLocation] = useState(profile.location ?? "");
-  const [payoutMethod, setPayoutMethod] = useState(profile.payout_method ?? "");
-  const [payoutProvider, setPayoutProvider] = useState(profile.payout_provider ?? "");
-  const [payoutAccountName, setPayoutAccountName] = useState(profile.payout_account_name ?? "");
-  const [payoutAccountNumber, setPayoutAccountNumber] = useState(profile.payout_account_number ?? "");
-  const [payoutNotes, setPayoutNotes] = useState(profile.payout_notes ?? "");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatar_url);
   const [submitting, setSubmitting] = useState(false);
@@ -46,11 +41,11 @@ export function EditProfileScreen({ profile, onBack, onSubmit }: Props) {
       skills: parsedSkills,
       portfolioUrl,
       location,
-      payoutMethod,
-      payoutProvider,
-      payoutAccountName,
-      payoutAccountNumber,
-      payoutNotes,
+      payoutMethod: profile.payout_method ?? "",
+      payoutProvider: profile.payout_provider ?? "",
+      payoutAccountName: profile.payout_account_name ?? "",
+      payoutAccountNumber: profile.payout_account_number ?? "",
+      payoutNotes: profile.payout_notes ?? "",
       avatar: avatar ?? undefined,
     });
     setSubmitting(false);
@@ -114,25 +109,8 @@ export function EditProfileScreen({ profile, onBack, onSubmit }: Props) {
             <input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={120} className="field" placeholder="City, country" />
           </Field>
 
-          <Field icon={<CreditCard size={17} />} label="Payout account">
-            <div className="grid gap-2">
-              <select value={payoutMethod} onChange={(event) => setPayoutMethod(event.target.value)} className="field">
-                <option value="">Select payout method</option>
-                <option value="bank">Bank transfer</option>
-                <option value="ewallet">E-wallet</option>
-              </select>
-              <input value={payoutProvider} onChange={(event) => setPayoutProvider(event.target.value)} maxLength={80} className="field" placeholder="Bank/e-wallet name, e.g. BCA, Mandiri, GoPay" />
-              <input value={payoutAccountName} onChange={(event) => setPayoutAccountName(event.target.value)} maxLength={120} className="field" placeholder="Account holder name" />
-              <input value={payoutAccountNumber} onChange={(event) => setPayoutAccountNumber(event.target.value)} maxLength={80} className="field" placeholder="Account number / phone number" />
-              <textarea value={payoutNotes} onChange={(event) => setPayoutNotes(event.target.value)} maxLength={300} rows={3} className="field resize-none" placeholder="Optional payout note" />
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              This is private and used by admin to pay you after accepted work.
-            </p>
-          </Field>
-
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs leading-relaxed text-blue-800">
-            Your email, payout account, and identity verification documents are private. Public profiles only show public profile fields plus verification status.
+            Your email and identity verification documents are private. Public profiles only show public profile fields plus verification status.
           </div>
 
           {error && <div className="flex gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-destructive"><AlertCircle size={17} className="mt-0.5 flex-shrink-0" />{error}</div>}
